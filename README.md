@@ -16,7 +16,7 @@ An interactive visual tool that finds loopholes, exemptions, and gray areas in a
 
 ## How to Use
 
-1. Visit the [live demo](https://unknownhacker9991.github.io/LoopholeMap/)
+1. Visit the [live demo](https://0xmortuex.github.io/LoopholeMap/)
 2. Paste any regulation, law, or policy text into the input area
 3. Click **Scan for Loopholes** (or press Ctrl+Enter)
 4. Explore the interactive graph — click nodes for details, drag to reposition, scroll to zoom
@@ -25,7 +25,7 @@ An interactive visual tool that finds loopholes, exemptions, and gray areas in a
 Or clone and run locally:
 
 ```bash
-git clone https://github.com/unknownhacker9991/LoopholeMap.git
+git clone https://github.com/0xmortuex/LoopholeMap.git
 cd LoopholeMap
 # Open index.html in a browser — no build step needed
 ```
