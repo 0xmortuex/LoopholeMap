@@ -131,10 +131,6 @@ function computeLinkPath(src, tgt) {
 function initGraph(container, data, callbacks) {
   onNodeClick = callbacks.onNodeClick || null;
 
-  const rect = container.getBoundingClientRect();
-  width = rect.width;
-  height = rect.height;
-
   nodesData = data.nodes.map(n => ({ ...n }));
   linksData = data.connections.map(c => ({ ...c }));
 
@@ -149,6 +145,11 @@ function initGraph(container, data, callbacks) {
     const p = layout.positions[n.id];
     if (p) n._pos = p;
   });
+
+  // Use container dimensions if available, otherwise fall back to content dimensions
+  const rect = container.getBoundingClientRect();
+  width = rect.width > 0 ? rect.width : contentW;
+  height = rect.height > 0 ? rect.height : contentH;
 
   d3.select(container).selectAll('*').remove();
 
@@ -379,6 +380,9 @@ function initGraph(container, data, callbacks) {
 
   zoomToFit(0);
   animateIn();
+
+  // Re-zoom after a short delay in case container dimensions weren't ready
+  setTimeout(() => zoomToFit(300), 300);
 }
 
 /* ===== Animation ===== */
@@ -454,11 +458,37 @@ function resetView() {
 }
 
 function zoomToFit(duration = 600) {
-  if (!contentW || !contentH) return;
+  if (!nodesData || nodesData.length === 0) return;
 
-  const scale = Math.min(width / contentW, height / contentH, 1.5);
-  const cx = contentW / 2;
-  const cy = contentH / 2;
+  // Compute actual bounds from node positions with 50px padding
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  nodesData.forEach(n => {
+    if (!n._pos) return;
+    minX = Math.min(minX, n._pos.x - 50);
+    minY = Math.min(minY, n._pos.y - 70); // extra for column headers
+    maxX = Math.max(maxX, n._pos.x + NODE_W + 50);
+    maxY = Math.max(maxY, n._pos.y + NODE_H + 50);
+  });
+
+  if (!isFinite(minX)) return;
+
+  const bw = maxX - minX;
+  const bh = maxY - minY;
+
+  // Re-read container dimensions in case it became visible
+  const container = svg.node()?.parentElement;
+  if (container) {
+    const r = container.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      width = r.width;
+      height = r.height;
+      svg.attr('viewBox', `0 0 ${width} ${height}`);
+    }
+  }
+
+  const scale = Math.min(width / bw, height / bh, 1.5);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
 
   const transform = d3.zoomIdentity
     .translate(width / 2, height / 2)
