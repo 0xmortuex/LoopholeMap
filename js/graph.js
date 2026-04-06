@@ -28,349 +28,274 @@ const SEVERITY_COLORS = {
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
-const COLUMN_ORDER = [
-  'loophole', 'exemption', 'gray-area', 'contradiction',
-  'missing-definition', 'weak-enforcement', 'scope-gap', 'sunset-clause'
-];
+const COLUMN_WIDTH = 200;
+const COLUMN_GAP = 60;
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 56;
+const NODE_GAP_Y = 20;
+const HEADER_HEIGHT = 50;
+const START_Y = 80;
+const START_X = 40;
 
-const NODE_W = 170;
-const NODE_H = 60;
-const NODE_R = 10;
-const COL_GAP = 80;
-const ROW_GAP = 20;
-const HEADER_H = 40;
-const HEADER_GAP = 16;
-const PADDING = 60;
-
-let svg, g, nodesData, linksData, nodeElements, linkElements;
-let zoom, labelsVisible = false, tooltip, onNodeClick = null;
-let width, height, contentW, contentH, nodeMap;
-
-/* ===== Layout Engine ===== */
-
-function computeLayout(nodes) {
-  const groups = {};
-  nodes.forEach(n => {
-    if (!groups[n.type]) groups[n.type] = [];
-    groups[n.type].push(n);
-  });
-
-  const activeTypes = COLUMN_ORDER.filter(t => groups[t] && groups[t].length > 0);
-
-  activeTypes.forEach(t => {
-    groups[t].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3));
-  });
-
-  const columns = [];
-  const positions = {};
-  let curX = PADDING;
-
-  activeTypes.forEach(type => {
-    const colNodes = groups[type];
-    const col = { type, x: curX, nodeCount: colNodes.length, nodes: [] };
-
-    let curY = PADDING + HEADER_H + HEADER_GAP;
-    let lastSev = null;
-
-    colNodes.forEach(n => {
-      if (lastSev !== null && SEVERITY_ORDER[n.severity] !== SEVERITY_ORDER[lastSev]) {
-        curY += 8;
-      }
-      lastSev = n.severity;
-
-      positions[n.id] = {
-        x: curX,
-        y: curY,
-        cx: curX + NODE_W / 2,
-        cy: curY + NODE_H / 2,
-        col: type
-      };
-      col.nodes.push(n.id);
-      curY += NODE_H + ROW_GAP;
-    });
-
-    col.height = curY - ROW_GAP + PADDING;
-    columns.push(col);
-    curX += NODE_W + COL_GAP;
-  });
-
-  const totalW = curX - COL_GAP + PADDING;
-  const totalH = Math.max(...columns.map(c => c.height), PADDING * 2 + HEADER_H);
-
-  return { columns, positions, totalWidth: totalW, totalHeight: totalH };
-}
-
-/* ===== Connection Paths ===== */
-
-function computeLinkPath(src, tgt) {
-  const sp = src._pos;
-  const tp = tgt._pos;
-
-  if (sp.col !== tp.col) {
-    const goingRight = sp.x < tp.x;
-    const sx = goingRight ? sp.x + NODE_W : sp.x;
-    const sy = sp.cy;
-    const tx = goingRight ? tp.x : tp.x + NODE_W;
-    const ty = tp.cy;
-    const offset = Math.max(Math.abs(tx - sx) * 0.4, 50);
-    const c1x = goingRight ? sx + offset : sx - offset;
-    const c2x = goingRight ? tx - offset : tx + offset;
-    return `M${sx},${sy} C${c1x},${sy} ${c2x},${ty} ${tx},${ty}`;
-  }
-
-  const sx = sp.x + NODE_W;
-  const sy = sp.cy;
-  const tx = tp.x + NODE_W;
-  const ty = tp.cy;
-  const bulge = NODE_W * 0.5;
-  return `M${sx},${sy} C${sx + bulge},${sy} ${tx + bulge},${ty} ${tx},${ty}`;
-}
-
-/* ===== Init ===== */
+let svg, mainGroup, nodesData, linksData, nodeElements, linkElements;
+let zoomBehavior, labelsVisible = false, tooltip, onNodeClick = null;
+let totalWidth, totalHeight, nodeMap, typeKeys;
 
 function initGraph(container, data, callbacks) {
   onNodeClick = callbacks.onNodeClick || null;
 
-  nodesData = data.nodes.map(n => ({ ...n }));
+  // Step 1: Group nodes by type, sort by severity
+  const groups = {};
+  data.nodes.forEach(node => {
+    if (!groups[node.type]) groups[node.type] = [];
+    groups[node.type].push({ ...node });
+  });
+  Object.values(groups).forEach(arr =>
+    arr.sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3))
+  );
+
+  // Step 2: Calculate positions — set x,y on every node BEFORE rendering
+  typeKeys = Object.keys(groups);
+  typeKeys.forEach((type, colIndex) => {
+    const colX = START_X + colIndex * (COLUMN_WIDTH + COLUMN_GAP);
+    groups[type].forEach((node, rowIndex) => {
+      node.x = colX;
+      node.y = START_Y + HEADER_HEIGHT + rowIndex * (NODE_HEIGHT + NODE_GAP_Y);
+    });
+  });
+
+  // Flatten into arrays
+  nodesData = [];
+  typeKeys.forEach(type => { nodesData.push(...groups[type]); });
   linksData = data.connections.map(c => ({ ...c }));
 
   nodeMap = {};
   nodesData.forEach(n => { nodeMap[n.id] = n; });
 
-  const layout = computeLayout(nodesData);
-  contentW = layout.totalWidth;
-  contentH = layout.totalHeight;
+  // Step 3: Calculate viewBox to fit all content
+  totalWidth = START_X * 2 + typeKeys.length * (COLUMN_WIDTH + COLUMN_GAP);
+  const maxNodesInCol = Math.max(...Object.values(groups).map(g => g.length));
+  totalHeight = START_Y + HEADER_HEIGHT + maxNodesInCol * (NODE_HEIGHT + NODE_GAP_Y) + 80;
 
-  nodesData.forEach(n => {
-    const p = layout.positions[n.id];
-    if (p) n._pos = p;
-  });
-
-  // Use container dimensions if available, otherwise fall back to content dimensions
-  const rect = container.getBoundingClientRect();
-  width = rect.width > 0 ? rect.width : contentW;
-  height = rect.height > 0 ? rect.height : contentH;
-
+  // Clear and create SVG
   d3.select(container).selectAll('*').remove();
 
   svg = d3.select(container)
     .append('svg')
     .attr('width', '100%')
     .attr('height', '100%')
-    .attr('viewBox', `0 0 ${width} ${height}`);
+    .attr('viewBox', `0 0 ${totalWidth} ${totalHeight}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
 
   const defs = svg.append('defs');
 
-  VALID_TYPES.forEach(type => {
-    const color = TYPE_COLORS[type];
-    const filter = defs.append('filter')
-      .attr('id', `shadow-${type}`)
-      .attr('x', '-20%').attr('y', '-20%')
-      .attr('width', '140%').attr('height', '140%');
-    filter.append('feDropShadow')
-      .attr('dx', 0).attr('dy', 2)
-      .attr('stdDeviation', 4)
-      .attr('flood-color', color)
-      .attr('flood-opacity', 0.1);
-
-    const filterHover = defs.append('filter')
-      .attr('id', `shadow-hover-${type}`)
-      .attr('x', '-20%').attr('y', '-20%')
-      .attr('width', '140%').attr('height', '140%');
-    filterHover.append('feDropShadow')
-      .attr('dx', 0).attr('dy', 2)
-      .attr('stdDeviation', 6)
-      .attr('flood-color', color)
-      .attr('flood-opacity', 0.25);
-  });
-
+  // Arrow markers for each relationship type
   VALID_RELATIONSHIP_TYPES.forEach(type => {
     defs.append('marker')
       .attr('id', `arrow-${type}`)
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 8)
+      .attr('refX', 10)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 7)
+      .attr('markerHeight', 7)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-4L8,0L0,4')
+      .attr('d', 'M0,-4L8,0L0,4Z')
       .attr('fill', LINK_COLORS[type])
       .attr('opacity', 0.7);
   });
 
-  g = svg.append('g');
+  // Drop shadow filter
+  const shadow = defs.append('filter').attr('id', 'card-shadow')
+    .attr('x', '-10%').attr('y', '-10%').attr('width', '120%').attr('height', '130%');
+  shadow.append('feDropShadow')
+    .attr('dx', 0).attr('dy', 2).attr('stdDeviation', 4)
+    .attr('flood-color', '#000').attr('flood-opacity', 0.3);
 
-  // Column stripes
-  layout.columns.forEach(col => {
-    g.append('rect')
-      .attr('class', 'column-stripe')
-      .attr('x', col.x - 15)
-      .attr('y', PADDING)
-      .attr('width', NODE_W + 30)
-      .attr('height', contentH - PADDING)
+  // Step 8: Pan & zoom
+  mainGroup = svg.append('g');
+
+  zoomBehavior = d3.zoom()
+    .scaleExtent([0.3, 2])
+    .on('zoom', (event) => {
+      mainGroup.attr('transform', event.transform);
+    });
+
+  svg.call(zoomBehavior);
+  svg.on('dblclick.zoom', null);
+  svg.on('dblclick', () => resetView());
+
+  // Step 4: Column backgrounds
+  typeKeys.forEach((type, colIndex) => {
+    const colX = START_X + colIndex * (COLUMN_WIDTH + COLUMN_GAP);
+    mainGroup.append('rect')
+      .attr('x', colX - 10)
+      .attr('y', START_Y - 10)
+      .attr('width', COLUMN_WIDTH + 20)
+      .attr('height', totalHeight - START_Y)
       .attr('rx', 8)
-      .attr('fill', TYPE_COLORS[col.type])
-      .attr('opacity', 0.04);
+      .attr('fill', TYPE_COLORS[type] || '#64748b')
+      .attr('opacity', 0.05)
+      .style('pointer-events', 'none');
   });
 
-  // Column headers
-  layout.columns.forEach(col => {
-    const hg = g.append('g');
-    const typeLabel = col.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Step 5: Column headers
+  typeKeys.forEach((type, colIndex) => {
+    const colX = START_X + colIndex * (COLUMN_WIDTH + COLUMN_GAP);
+    const label = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const count = groups[type].length;
 
+    const hg = mainGroup.append('g');
     hg.append('circle')
-      .attr('cx', col.x + 8)
-      .attr('cy', PADDING + 14)
+      .attr('cx', colX + 8)
+      .attr('cy', START_Y + 12)
       .attr('r', 5)
-      .attr('fill', TYPE_COLORS[col.type]);
+      .attr('fill', TYPE_COLORS[type] || '#64748b');
 
     hg.append('text')
-      .attr('class', 'column-header-label')
-      .attr('x', col.x + 20)
-      .attr('y', PADDING + 18)
-      .text(typeLabel);
+      .attr('x', colX + 20)
+      .attr('y', START_Y + 16)
+      .attr('font-family', 'Outfit, sans-serif')
+      .attr('font-size', '13px')
+      .attr('font-weight', '600')
+      .attr('fill', '#94a3b8')
+      .text(label);
 
     hg.append('text')
-      .attr('class', 'column-header-count')
-      .attr('x', col.x + NODE_W - 5)
-      .attr('y', PADDING + 18)
+      .attr('x', colX + COLUMN_WIDTH - 10)
+      .attr('y', START_Y + 16)
       .attr('text-anchor', 'end')
-      .text(`(${col.nodeCount})`);
+      .attr('font-family', 'JetBrains Mono, monospace')
+      .attr('font-size', '11px')
+      .attr('fill', '#64748b')
+      .text(`(${count})`);
   });
 
-  // Links
-  const linksG = g.append('g').attr('class', 'links');
+  // Step 7: Connections (render before nodes so nodes appear on top)
+  const linksG = mainGroup.append('g');
+
+  const validLinks = linksData.filter(l => nodeMap[l.source] && nodeMap[l.target]);
 
   linkElements = linksG.selectAll('g')
-    .data(linksData.filter(l => nodeMap[l.source] && nodeMap[l.target]))
+    .data(validLinks)
     .enter()
     .append('g')
     .attr('class', 'link-group');
 
   linkElements.append('path')
     .attr('class', d => `link-line link-animated link-${d.type}`)
+    .attr('fill', 'none')
     .attr('stroke', d => LINK_COLORS[d.type] || '#64748b')
+    .attr('stroke-width', 1.5)
+    .attr('opacity', 0.45)
     .attr('marker-end', d => `url(#arrow-${d.type})`)
-    .attr('d', d => computeLinkPath(nodeMap[d.source], nodeMap[d.target]))
+    .attr('d', d => {
+      const src = nodeMap[d.source];
+      const tgt = nodeMap[d.target];
+      return computeLinkPath(src, tgt);
+    })
     .on('mouseenter', (event, d) => showLinkTooltip(event, d))
     .on('mouseleave', hideTooltip);
 
-  // Nodes
-  const nodesG = g.append('g').attr('class', 'nodes');
+  // Step 6: Render nodes
+  const nodesG = mainGroup.append('g');
 
   nodeElements = nodesG.selectAll('g')
-    .data(nodesData.filter(n => n._pos))
+    .data(nodesData)
     .enter()
     .append('g')
     .attr('class', 'node-group')
-    .attr('transform', d => `translate(${d._pos.x},${d._pos.y})`)
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
     .on('click', (event, d) => {
       event.stopPropagation();
       if (onNodeClick) onNodeClick(d);
     })
     .on('mouseenter', function(event, d) {
       showNodeTooltip(event, d);
-      d3.select(this).select('.node-card').attr('filter', `url(#shadow-hover-${d.type})`);
-      const pos = d._pos;
+      d3.select(this).select('.node-card')
+        .attr('stroke-width', 2)
+        .attr('stroke-opacity', 1);
       d3.select(this)
-        .transition().duration(150)
-        .attr('transform', `translate(${pos.x - NODE_W * 0.025},${pos.y - NODE_H * 0.025}) scale(1.05)`);
+        .transition().duration(120)
+        .attr('transform', `translate(${d.x - NODE_WIDTH * 0.02},${d.y - NODE_HEIGHT * 0.02}) scale(1.04)`);
     })
     .on('mouseleave', function(event, d) {
       hideTooltip();
-      d3.select(this).select('.node-card').attr('filter', `url(#shadow-${d.type})`);
-      const pos = d._pos;
+      d3.select(this).select('.node-card')
+        .attr('stroke-width', 1)
+        .attr('stroke-opacity', 0.3);
       d3.select(this)
-        .transition().duration(150)
-        .attr('transform', `translate(${pos.x},${pos.y}) scale(1)`);
+        .transition().duration(120)
+        .attr('transform', `translate(${d.x},${d.y}) scale(1)`);
     });
 
   // Card background
   nodeElements.append('rect')
     .attr('class', 'node-card')
-    .attr('width', NODE_W)
-    .attr('height', NODE_H)
-    .attr('rx', NODE_R)
+    .attr('width', NODE_WIDTH)
+    .attr('height', NODE_HEIGHT)
+    .attr('rx', 8)
     .attr('fill', '#16161f')
-    .attr('filter', d => `url(#shadow-${d.type})`);
+    .attr('stroke', d => TYPE_COLORS[d.type] || '#64748b')
+    .attr('stroke-width', 1)
+    .attr('stroke-opacity', 0.3)
+    .attr('filter', 'url(#card-shadow)');
 
   // Left accent border
   nodeElements.append('rect')
-    .attr('class', 'node-accent')
     .attr('x', 0)
-    .attr('y', 0)
+    .attr('y', 4)
     .attr('width', 4)
-    .attr('height', NODE_H)
+    .attr('height', NODE_HEIGHT - 8)
     .attr('rx', 2)
-    .attr('fill', d => TYPE_COLORS[d.type]);
+    .attr('fill', d => TYPE_COLORS[d.type] || '#64748b')
+    .style('pointer-events', 'none');
 
-  // Clip to rounded left edge
-  nodeElements.each(function(d, i) {
-    const clipId = `clip-accent-${i}`;
-    defs.append('clipPath')
-      .attr('id', clipId)
-      .append('rect')
-      .attr('x', 0).attr('y', 0)
-      .attr('width', 6).attr('height', NODE_H)
-      .attr('rx', NODE_R);
-    d3.select(this).select('.node-accent').attr('clip-path', `url(#${clipId})`);
-  });
-
-  // Title text
+  // Title text (truncated to 20 chars)
   nodeElements.append('text')
-    .attr('class', 'node-title')
     .attr('x', 14)
-    .attr('y', 28)
-    .text(d => d.title)
-    .each(function() {
-      const el = this;
-      const maxW = NODE_W - 40;
-      let text = el.textContent;
-      if (el.getComputedTextLength && el.getComputedTextLength() > maxW) {
-        while (text.length > 0 && el.getComputedTextLength() > maxW) {
-          text = text.slice(0, -1);
-          el.textContent = text + '...';
-        }
-      }
-    });
+    .attr('y', 24)
+    .attr('font-family', 'Outfit, sans-serif')
+    .attr('font-size', '12px')
+    .attr('font-weight', '500')
+    .attr('fill', '#e2e8f0')
+    .style('pointer-events', 'none')
+    .text(d => d.title.length > 20 ? d.title.slice(0, 18) + '...' : d.title);
 
-  // Severity label text
+  // Severity label
   nodeElements.append('text')
-    .attr('class', 'node-title')
     .attr('x', 14)
-    .attr('y', 45)
-    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b')
+    .attr('y', 42)
+    .attr('font-family', 'Outfit, sans-serif')
     .attr('font-size', '10px')
-    .attr('opacity', 0.7)
+    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b')
+    .attr('opacity', 0.8)
+    .style('pointer-events', 'none')
     .text(d => d.severity);
 
   // Severity dot
   nodeElements.append('circle')
-    .attr('class', 'node-severity-dot')
-    .attr('cx', NODE_W - 16)
-    .attr('cy', NODE_H / 2)
+    .attr('cx', NODE_WIDTH - 14)
+    .attr('cy', NODE_HEIGHT / 2)
     .attr('r', 4)
-    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b');
+    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b')
+    .style('pointer-events', 'none');
 
-  // Secondary labels (toggled)
+  // Section label (toggled with toggleLabels)
   nodeElements.append('text')
-    .attr('class', 'node-secondary-label')
-    .attr('x', NODE_W / 2)
-    .attr('y', NODE_H + 14)
+    .attr('class', 'node-section-label')
+    .attr('x', NODE_WIDTH / 2)
+    .attr('y', NODE_HEIGHT + 14)
+    .attr('text-anchor', 'middle')
+    .attr('font-family', 'Outfit, sans-serif')
+    .attr('font-size', '9px')
+    .attr('fill', '#64748b')
+    .attr('opacity', 0)
+    .style('pointer-events', 'none')
     .text(d => d.section || '');
 
-  // Zoom & pan
-  zoom = d3.zoom()
-    .scaleExtent([0.15, 3])
-    .on('zoom', (event) => {
-      g.attr('transform', event.transform);
-    });
-
-  svg.call(zoom);
-  svg.on('dblclick.zoom', null);
-  svg.on('dblclick', () => resetView());
-
+  // Tooltip
   tooltip = document.querySelector('.graph-tooltip');
   if (!tooltip) {
     tooltip = document.createElement('div');
@@ -378,36 +303,68 @@ function initGraph(container, data, callbacks) {
     document.body.appendChild(tooltip);
   }
 
+  // Initial zoom to fit
   zoomToFit(0);
-  animateIn();
 
-  // Re-zoom after a short delay in case container dimensions weren't ready
-  setTimeout(() => zoomToFit(300), 300);
+  // Animate in
+  animateIn();
 }
 
-/* ===== Animation ===== */
+// Step 7 helper: Bezier curve paths
+function computeLinkPath(src, tgt) {
+  if (!src || !tgt) return '';
+
+  const sameColumn = (src.x === tgt.x);
+
+  if (sameColumn) {
+    // U-shape curving to the right
+    const sx = src.x + NODE_WIDTH;
+    const sy = src.y + NODE_HEIGHT / 2;
+    const tx = tgt.x + NODE_WIDTH;
+    const ty = tgt.y + NODE_HEIGHT / 2;
+    const bulge = 150;
+    return `M${sx},${sy} C${sx + bulge},${sy} ${tx + bulge},${ty} ${tx},${ty}`;
+  }
+
+  // Source right edge → target left edge
+  const goingRight = src.x < tgt.x;
+  const sx = goingRight ? src.x + NODE_WIDTH : src.x;
+  const sy = src.y + NODE_HEIGHT / 2;
+  const tx = goingRight ? tgt.x : tgt.x + NODE_WIDTH;
+  const ty = tgt.y + NODE_HEIGHT / 2;
+
+  const dx = Math.abs(tx - sx);
+  const offset = Math.max(dx * 0.4, 40);
+
+  const c1x = goingRight ? sx + offset : sx - offset;
+  const c2x = goingRight ? tx - offset : tx + offset;
+
+  return `M${sx},${sy} C${c1x},${sy} ${c2x},${ty} ${tx},${ty}`;
+}
 
 function animateIn() {
-  nodeElements.each(function(d, i) {
-    d3.select(this)
-      .transition()
-      .delay(i * 30)
-      .duration(0)
-      .on('end', function() { d3.select(this).classed('visible', true); });
-  });
-
-  const totalDelay = nodesData.length * 30 + 400;
-
-  linkElements.each(function(d, i) {
-    d3.select(this)
-      .transition()
-      .delay(totalDelay + i * 20)
-      .duration(0)
-      .on('end', function() { d3.select(this).classed('visible', true); });
-  });
+  if (nodeElements) {
+    nodeElements.each(function(d, i) {
+      d3.select(this)
+        .style('opacity', 0)
+        .transition()
+        .delay(i * 25)
+        .duration(300)
+        .style('opacity', 1);
+    });
+  }
+  if (linkElements) {
+    const delay = nodesData.length * 25 + 200;
+    linkElements.each(function(d, i) {
+      d3.select(this)
+        .style('opacity', 0)
+        .transition()
+        .delay(delay + i * 15)
+        .duration(300)
+        .style('opacity', 1);
+    });
+  }
 }
-
-/* ===== Tooltips ===== */
 
 function showNodeTooltip(event, d) {
   const typeLabel = d.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -443,94 +400,88 @@ function hideTooltip() {
   if (tooltip) tooltip.classList.remove('visible');
 }
 
-/* ===== Controls ===== */
-
 function zoomIn() {
-  svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+  svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.3);
 }
 
 function zoomOut() {
-  svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+  svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.7);
 }
 
 function resetView() {
-  zoomToFit(500);
+  zoomToFit(400);
 }
 
-function zoomToFit(duration = 600) {
-  if (!nodesData || nodesData.length === 0) return;
+function zoomToFit(duration) {
+  if (!svg || !totalWidth || !totalHeight) return;
 
-  // Compute actual bounds from node positions with 50px padding
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  nodesData.forEach(n => {
-    if (!n._pos) return;
-    minX = Math.min(minX, n._pos.x - 50);
-    minY = Math.min(minY, n._pos.y - 70); // extra for column headers
-    maxX = Math.max(maxX, n._pos.x + NODE_W + 50);
-    maxY = Math.max(maxY, n._pos.y + NODE_H + 50);
-  });
-
-  if (!isFinite(minX)) return;
-
-  const bw = maxX - minX;
-  const bh = maxY - minY;
-
-  // Re-read container dimensions in case it became visible
+  // Read actual container size
   const container = svg.node()?.parentElement;
-  if (container) {
-    const r = container.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0) {
-      width = r.width;
-      height = r.height;
-      svg.attr('viewBox', `0 0 ${width} ${height}`);
-    }
-  }
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const vw = rect.width || totalWidth;
+  const vh = rect.height || totalHeight;
 
-  const scale = Math.min(width / bw, height / bh, 1.5);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
+  const scale = Math.min(vw / totalWidth, vh / totalHeight) * 0.95;
+  const tx = (vw - totalWidth * scale) / 2;
+  const ty = (vh - totalHeight * scale) / 2;
 
-  const transform = d3.zoomIdentity
-    .translate(width / 2, height / 2)
-    .scale(scale)
-    .translate(-cx, -cy);
+  const transform = d3.zoomIdentity.translate(tx, ty).scale(scale);
 
   if (duration > 0) {
-    svg.transition().duration(duration).call(zoom.transform, transform);
+    svg.transition().duration(duration).call(zoomBehavior.transform, transform);
   } else {
-    svg.call(zoom.transform, transform);
+    svg.call(zoomBehavior.transform, transform);
   }
 }
 
 function toggleLabels() {
   labelsVisible = !labelsVisible;
-  g.selectAll('.node-secondary-label').classed('visible', labelsVisible);
+  mainGroup.selectAll('.node-section-label')
+    .transition().duration(200)
+    .attr('opacity', labelsVisible ? 1 : 0);
   return labelsVisible;
 }
 
+// Step 9: Center on node from sidebar
 function centerOnNode(nodeId) {
-  const node = nodesData.find(n => n.id === nodeId);
-  if (!node || !node._pos) return;
+  const node = nodeMap?.[nodeId];
+  if (!node || !svg) return;
 
-  nodeElements.classed('highlighted', false);
-  nodeElements.filter(d => d.id === nodeId).classed('highlighted', true);
+  // Remove old highlights
+  mainGroup.selectAll('.node-group').classed('highlighted', false);
+  mainGroup.selectAll('.node-group')
+    .filter(d => d.id === nodeId)
+    .classed('highlighted', true);
 
-  const scale = 1.8;
-  const transform = d3.zoomIdentity
-    .translate(width / 2, height / 2)
-    .scale(scale)
-    .translate(-node._pos.cx, -node._pos.cy);
+  // Read container size
+  const container = svg.node()?.parentElement;
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const vw = rect.width || totalWidth;
+  const vh = rect.height || totalHeight;
 
-  svg.transition().duration(600).call(zoom.transform, transform);
+  // Center the node
+  const scale = 1.4;
+  const nodeCX = node.x + NODE_WIDTH / 2;
+  const nodeCY = node.y + NODE_HEIGHT / 2;
+  const tx = vw / 2 - nodeCX * scale;
+  const ty = vh / 2 - nodeCY * scale;
+
+  const transform = d3.zoomIdentity.translate(tx, ty).scale(scale);
+  svg.transition().duration(500).call(zoomBehavior.transform, transform);
 
   setTimeout(() => {
-    nodeElements.classed('highlighted', false);
+    mainGroup.selectAll('.node-group').classed('highlighted', false);
   }, 3000);
 }
 
 function highlightNode(nodeId) {
-  nodeElements.classed('highlighted', false);
-  nodeElements.filter(d => d.id === nodeId).classed('highlighted', true);
+  if (!mainGroup) return;
+  mainGroup.selectAll('.node-group').classed('highlighted', false);
+  mainGroup.selectAll('.node-group')
+    .filter(d => d.id === nodeId)
+    .classed('highlighted', true);
 }
 
 function destroyGraph() {
