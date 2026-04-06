@@ -28,7 +28,7 @@ const SEVERITY_RADIUS = {
 
 let svg, g, simulation, nodesData, linksData, nodeElements, linkElements, labelElements;
 let zoom;
-let labelsVisible = true;
+let labelsVisible = false;
 let tooltip;
 let onNodeClick = null;
 let width, height;
@@ -36,16 +36,22 @@ let width, height;
 function initGraph(container, data, callbacks) {
   onNodeClick = callbacks.onNodeClick || null;
 
-  nodesData = data.nodes.map(n => ({ ...n }));
+  const rect = container.getBoundingClientRect();
+  width = rect.width;
+  height = rect.height;
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const spreadRadius = Math.min(width, height) * 0.35;
+  nodesData = data.nodes.map((n, i) => {
+    const angle = (2 * Math.PI * i) / data.nodes.length;
+    return { ...n, x: cx + spreadRadius * Math.cos(angle), y: cy + spreadRadius * Math.sin(angle) };
+  });
   linksData = data.connections.map(c => ({
     ...c,
     source: c.source,
     target: c.target
   }));
-
-  const rect = container.getBoundingClientRect();
-  width = rect.width;
-  height = rect.height;
 
   d3.select(container).selectAll('*').remove();
 
@@ -138,8 +144,18 @@ function initGraph(container, data, callbacks) {
       event.stopPropagation();
       if (onNodeClick) onNodeClick(d);
     })
-    .on('mouseenter', (event, d) => showNodeTooltip(event, d))
-    .on('mouseleave', hideTooltip);
+    .on('mouseenter', (event, d) => {
+      showNodeTooltip(event, d);
+      if (!labelsVisible) {
+        d3.select(event.currentTarget).select('.node-label').attr('opacity', 1);
+      }
+    })
+    .on('mouseleave', (event) => {
+      hideTooltip();
+      if (!labelsVisible) {
+        d3.select(event.currentTarget).select('.node-label').attr('opacity', 0);
+      }
+    });
 
   nodeElements.append('circle')
     .attr('class', d => `node-circle node-${d.type}`)
@@ -150,16 +166,27 @@ function initGraph(container, data, callbacks) {
   labelElements = nodeElements.append('text')
     .attr('class', 'node-label')
     .attr('dy', d => (SEVERITY_RADIUS[d.severity] || 16) + 14)
+    .attr('opacity', 0)
     .text(d => d.title.length > 20 ? d.title.slice(0, 18) + '...' : d.title);
 
   simulation = d3.forceSimulation(nodesData)
-    .force('link', d3.forceLink(linksData).id(d => d.id).distance(140).strength(0.4))
-    .force('charge', d3.forceManyBody().strength(-350))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(d => (SEVERITY_RADIUS[d.severity] || 16) + 20))
-    .force('x', d3.forceX(width / 2).strength(0.03))
-    .force('y', d3.forceY(height / 2).strength(0.03))
+    .force('link', d3.forceLink(linksData).id(d => d.id).distance(180).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-550).distanceMax(600))
+    .force('collision', d3.forceCollide().radius(d => (SEVERITY_RADIUS[d.severity] || 16) + 28).strength(1))
+    .force('x', d3.forceX(width / 2).strength(0.04))
+    .force('y', d3.forceY(height / 2).strength(0.04))
+    .alphaDecay(0.02)
     .on('tick', ticked);
+
+  // Auto zoom-to-fit after simulation stabilizes
+  let tickCount = 0;
+  simulation.on('tick.zoomfit', () => {
+    tickCount++;
+    if (tickCount === 200) {
+      zoomToFit();
+      simulation.on('tick.zoomfit', null);
+    }
+  });
 
   zoom = d3.zoom()
     .scaleExtent([0.2, 4])
@@ -277,22 +304,42 @@ function zoomOut() {
 }
 
 function resetView() {
-  svg.transition().duration(500).call(
-    zoom.transform,
-    d3.zoomIdentity.translate(0, 0).scale(1)
-  );
+  zoomToFit(500);
+}
+
+function zoomToFit(duration = 600) {
+  if (!nodesData || nodesData.length === 0) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  nodesData.forEach(d => {
+    const r = (SEVERITY_RADIUS[d.severity] || 16) + 30;
+    if (d.x - r < minX) minX = d.x - r;
+    if (d.y - r < minY) minY = d.y - r;
+    if (d.x + r > maxX) maxX = d.x + r;
+    if (d.y + r > maxY) maxY = d.y + r;
+  });
+
+  const padding = 60;
+  minX -= padding; minY -= padding; maxX += padding; maxY += padding;
+
+  const bw = maxX - minX;
+  const bh = maxY - minY;
+  const scale = Math.min(width / bw, height / bh, 1.8);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+
+  const transform = d3.zoomIdentity
+    .translate(width / 2, height / 2)
+    .scale(scale)
+    .translate(-cx, -cy);
+
+  svg.transition().duration(duration).call(zoom.transform, transform);
 }
 
 function toggleLabels() {
   labelsVisible = !labelsVisible;
-  const container = document.querySelector('.graph-container svg g');
-  if (container) {
-    const parent = container.parentElement;
-    if (labelsVisible) {
-      parent.classList.remove('labels-hidden');
-    } else {
-      parent.classList.add('labels-hidden');
-    }
+  if (labelElements) {
+    labelElements.attr('opacity', labelsVisible ? 1 : 0);
   }
   return labelsVisible;
 }
