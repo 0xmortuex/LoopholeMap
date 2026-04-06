@@ -152,15 +152,47 @@ function renderLegend() {
 
 function renderNodeList(nodes) {
   const container = document.getElementById('node-list');
-  const sorted = [...nodes].sort((a, b) => (SEVERITY_ORDER[a.severity] || 3) - (SEVERITY_ORDER[b.severity] || 3));
 
-  container.innerHTML = sorted.map(n => `
-    <div class="node-list-item" data-node-id="${n.id}">
-      <span class="node-type-dot" style="background: ${TYPE_COLORS[n.type] || '#64748b'}"></span>
-      <span class="node-list-title">${escapeHtml(n.title)}</span>
-      <span class="severity-badge ${n.severity}">${n.severity}</span>
-    </div>
-  `).join('');
+  const groups = {};
+  nodes.forEach(n => {
+    if (!groups[n.type]) groups[n.type] = [];
+    groups[n.type].push(n);
+  });
+
+  const typeOrder = VALID_TYPES.filter(t => groups[t] && groups[t].length > 0);
+
+  typeOrder.forEach(t => {
+    groups[t].sort((a, b) => (SEVERITY_ORDER[a.severity] || 3) - (SEVERITY_ORDER[b.severity] || 3));
+  });
+
+  container.innerHTML = typeOrder.map(type => {
+    const typeLabel = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const items = groups[type];
+    return `
+      <div class="node-list-group" data-type="${type}">
+        <div class="node-list-group-header">
+          <span class="node-type-dot" style="background: ${TYPE_COLORS[type] || '#64748b'}"></span>
+          <span class="node-list-group-title">${typeLabel}</span>
+          <span class="node-list-group-count">${items.length}</span>
+          <svg class="node-list-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="node-list-group-items">
+          ${items.map(n => `
+            <div class="node-list-item" data-node-id="${n.id}">
+              <span class="node-list-title">${escapeHtml(n.title)}</span>
+              <span class="severity-badge ${n.severity}">${n.severity}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.node-list-group-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.parentElement.classList.toggle('collapsed');
+    });
+  });
 
   container.querySelectorAll('.node-list-item').forEach(item => {
     item.addEventListener('click', () => {

@@ -19,19 +19,114 @@ const LINK_COLORS = {
   'amplifies': '#f97316'
 };
 
-const SEVERITY_RADIUS = {
-  'critical': 25,
-  'high': 20,
-  'medium': 16,
-  'low': 12
+const SEVERITY_COLORS = {
+  'critical': '#ef4444',
+  'high': '#f97316',
+  'medium': '#f59e0b',
+  'low': '#64748b'
 };
 
-let svg, g, simulation, nodesData, linksData, nodeElements, linkElements, labelElements;
-let zoom;
-let labelsVisible = false;
-let tooltip;
-let onNodeClick = null;
-let width, height;
+const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+
+const COLUMN_ORDER = [
+  'loophole', 'exemption', 'gray-area', 'contradiction',
+  'missing-definition', 'weak-enforcement', 'scope-gap', 'sunset-clause'
+];
+
+const NODE_W = 170;
+const NODE_H = 60;
+const NODE_R = 10;
+const COL_GAP = 80;
+const ROW_GAP = 20;
+const HEADER_H = 40;
+const HEADER_GAP = 16;
+const PADDING = 60;
+
+let svg, g, nodesData, linksData, nodeElements, linkElements;
+let zoom, labelsVisible = false, tooltip, onNodeClick = null;
+let width, height, contentW, contentH, nodeMap;
+
+/* ===== Layout Engine ===== */
+
+function computeLayout(nodes) {
+  const groups = {};
+  nodes.forEach(n => {
+    if (!groups[n.type]) groups[n.type] = [];
+    groups[n.type].push(n);
+  });
+
+  const activeTypes = COLUMN_ORDER.filter(t => groups[t] && groups[t].length > 0);
+
+  activeTypes.forEach(t => {
+    groups[t].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3));
+  });
+
+  const columns = [];
+  const positions = {};
+  let curX = PADDING;
+
+  activeTypes.forEach(type => {
+    const colNodes = groups[type];
+    const col = { type, x: curX, nodeCount: colNodes.length, nodes: [] };
+
+    let curY = PADDING + HEADER_H + HEADER_GAP;
+    let lastSev = null;
+
+    colNodes.forEach(n => {
+      if (lastSev !== null && SEVERITY_ORDER[n.severity] !== SEVERITY_ORDER[lastSev]) {
+        curY += 8;
+      }
+      lastSev = n.severity;
+
+      positions[n.id] = {
+        x: curX,
+        y: curY,
+        cx: curX + NODE_W / 2,
+        cy: curY + NODE_H / 2,
+        col: type
+      };
+      col.nodes.push(n.id);
+      curY += NODE_H + ROW_GAP;
+    });
+
+    col.height = curY - ROW_GAP + PADDING;
+    columns.push(col);
+    curX += NODE_W + COL_GAP;
+  });
+
+  const totalW = curX - COL_GAP + PADDING;
+  const totalH = Math.max(...columns.map(c => c.height), PADDING * 2 + HEADER_H);
+
+  return { columns, positions, totalWidth: totalW, totalHeight: totalH };
+}
+
+/* ===== Connection Paths ===== */
+
+function computeLinkPath(src, tgt) {
+  const sp = src._pos;
+  const tp = tgt._pos;
+
+  if (sp.col !== tp.col) {
+    const goingRight = sp.x < tp.x;
+    const sx = goingRight ? sp.x + NODE_W : sp.x;
+    const sy = sp.cy;
+    const tx = goingRight ? tp.x : tp.x + NODE_W;
+    const ty = tp.cy;
+    const offset = Math.max(Math.abs(tx - sx) * 0.4, 50);
+    const c1x = goingRight ? sx + offset : sx - offset;
+    const c2x = goingRight ? tx - offset : tx + offset;
+    return `M${sx},${sy} C${c1x},${sy} ${c2x},${ty} ${tx},${ty}`;
+  }
+
+  const sx = sp.x + NODE_W;
+  const sy = sp.cy;
+  const tx = tp.x + NODE_W;
+  const ty = tp.cy;
+  const bulge = NODE_W * 0.5;
+  return `M${sx},${sy} C${sx + bulge},${sy} ${tx + bulge},${ty} ${tx},${ty}`;
+}
+
+/* ===== Init ===== */
 
 function initGraph(container, data, callbacks) {
   onNodeClick = callbacks.onNodeClick || null;
@@ -40,18 +135,20 @@ function initGraph(container, data, callbacks) {
   width = rect.width;
   height = rect.height;
 
-  const cx = width / 2;
-  const cy = height / 2;
-  const spreadRadius = Math.min(width, height) * 0.35;
-  nodesData = data.nodes.map((n, i) => {
-    const angle = (2 * Math.PI * i) / data.nodes.length;
-    return { ...n, x: cx + spreadRadius * Math.cos(angle), y: cy + spreadRadius * Math.sin(angle) };
+  nodesData = data.nodes.map(n => ({ ...n }));
+  linksData = data.connections.map(c => ({ ...c }));
+
+  nodeMap = {};
+  nodesData.forEach(n => { nodeMap[n.id] = n; });
+
+  const layout = computeLayout(nodesData);
+  contentW = layout.totalWidth;
+  contentH = layout.totalHeight;
+
+  nodesData.forEach(n => {
+    const p = layout.positions[n.id];
+    if (p) n._pos = p;
   });
-  linksData = data.connections.map(c => ({
-    ...c,
-    source: c.source,
-    target: c.target
-  }));
 
   d3.select(container).selectAll('*').remove();
 
@@ -66,59 +163,86 @@ function initGraph(container, data, callbacks) {
   VALID_TYPES.forEach(type => {
     const color = TYPE_COLORS[type];
     const filter = defs.append('filter')
-      .attr('id', `glow-${type}`)
-      .attr('x', '-50%').attr('y', '-50%')
-      .attr('width', '200%').attr('height', '200%');
-    filter.append('feGaussianBlur')
-      .attr('stdDeviation', '4')
-      .attr('result', 'coloredBlur');
-    filter.append('feFlood')
+      .attr('id', `shadow-${type}`)
+      .attr('x', '-20%').attr('y', '-20%')
+      .attr('width', '140%').attr('height', '140%');
+    filter.append('feDropShadow')
+      .attr('dx', 0).attr('dy', 2)
+      .attr('stdDeviation', 4)
       .attr('flood-color', color)
-      .attr('flood-opacity', '0.35')
-      .attr('result', 'glowColor');
-    filter.append('feComposite')
-      .attr('in', 'glowColor')
-      .attr('in2', 'coloredBlur')
-      .attr('operator', 'in')
-      .attr('result', 'softGlow');
-    const merge = filter.append('feMerge');
-    merge.append('feMergeNode').attr('in', 'softGlow');
-    merge.append('feMergeNode').attr('in', 'SourceGraphic');
+      .attr('flood-opacity', 0.1);
+
+    const filterHover = defs.append('filter')
+      .attr('id', `shadow-hover-${type}`)
+      .attr('x', '-20%').attr('y', '-20%')
+      .attr('width', '140%').attr('height', '140%');
+    filterHover.append('feDropShadow')
+      .attr('dx', 0).attr('dy', 2)
+      .attr('stdDeviation', 6)
+      .attr('flood-color', color)
+      .attr('flood-opacity', 0.25);
   });
 
   VALID_RELATIONSHIP_TYPES.forEach(type => {
     defs.append('marker')
       .attr('id', `arrow-${type}`)
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 20)
+      .attr('refX', 8)
       .attr('refY', 0)
-      .attr('markerWidth', 8)
-      .attr('markerHeight', 8)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-4L8,0L0,4')
       .attr('fill', LINK_COLORS[type])
-      .attr('opacity', 0.6);
+      .attr('opacity', 0.7);
   });
 
   g = svg.append('g');
 
-  const bgPattern = g.append('g').attr('class', 'graph-bg-pattern');
-  const gridSize = 40;
-  for (let x = 0; x < width * 3; x += gridSize) {
-    bgPattern.append('line')
-      .attr('x1', x - width).attr('y1', -height)
-      .attr('x2', x - width).attr('y2', height * 2);
-  }
-  for (let y = 0; y < height * 3; y += gridSize) {
-    bgPattern.append('line')
-      .attr('x1', -width).attr('y1', y - height)
-      .attr('x2', width * 2).attr('y2', y - height);
-  }
+  // Column stripes
+  layout.columns.forEach(col => {
+    g.append('rect')
+      .attr('class', 'column-stripe')
+      .attr('x', col.x - 15)
+      .attr('y', PADDING)
+      .attr('width', NODE_W + 30)
+      .attr('height', contentH - PADDING)
+      .attr('rx', 8)
+      .attr('fill', TYPE_COLORS[col.type])
+      .attr('opacity', 0.04);
+  });
 
-  linkElements = g.append('g').attr('class', 'links')
-    .selectAll('g')
-    .data(linksData)
+  // Column headers
+  layout.columns.forEach(col => {
+    const hg = g.append('g');
+    const typeLabel = col.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    hg.append('circle')
+      .attr('cx', col.x + 8)
+      .attr('cy', PADDING + 14)
+      .attr('r', 5)
+      .attr('fill', TYPE_COLORS[col.type]);
+
+    hg.append('text')
+      .attr('class', 'column-header-label')
+      .attr('x', col.x + 20)
+      .attr('y', PADDING + 18)
+      .text(typeLabel);
+
+    hg.append('text')
+      .attr('class', 'column-header-count')
+      .attr('x', col.x + NODE_W - 5)
+      .attr('y', PADDING + 18)
+      .attr('text-anchor', 'end')
+      .text(`(${col.nodeCount})`);
+  });
+
+  // Links
+  const linksG = g.append('g').attr('class', 'links');
+
+  linkElements = linksG.selectAll('g')
+    .data(linksData.filter(l => nodeMap[l.source] && nodeMap[l.target]))
     .enter()
     .append('g')
     .attr('class', 'link-group');
@@ -127,69 +251,117 @@ function initGraph(container, data, callbacks) {
     .attr('class', d => `link-line link-animated link-${d.type}`)
     .attr('stroke', d => LINK_COLORS[d.type] || '#64748b')
     .attr('marker-end', d => `url(#arrow-${d.type})`)
+    .attr('d', d => computeLinkPath(nodeMap[d.source], nodeMap[d.target]))
     .on('mouseenter', (event, d) => showLinkTooltip(event, d))
     .on('mouseleave', hideTooltip);
 
-  nodeElements = g.append('g').attr('class', 'nodes')
-    .selectAll('g')
-    .data(nodesData)
+  // Nodes
+  const nodesG = g.append('g').attr('class', 'nodes');
+
+  nodeElements = nodesG.selectAll('g')
+    .data(nodesData.filter(n => n._pos))
     .enter()
     .append('g')
     .attr('class', 'node-group')
-    .call(d3.drag()
-      .on('start', dragStarted)
-      .on('drag', dragged)
-      .on('end', dragEnded))
+    .attr('transform', d => `translate(${d._pos.x},${d._pos.y})`)
     .on('click', (event, d) => {
       event.stopPropagation();
       if (onNodeClick) onNodeClick(d);
     })
-    .on('mouseenter', (event, d) => {
+    .on('mouseenter', function(event, d) {
       showNodeTooltip(event, d);
-      if (!labelsVisible) {
-        d3.select(event.currentTarget).select('.node-label').attr('opacity', 1);
-      }
+      d3.select(this).select('.node-card').attr('filter', `url(#shadow-hover-${d.type})`);
+      const pos = d._pos;
+      d3.select(this)
+        .transition().duration(150)
+        .attr('transform', `translate(${pos.x - NODE_W * 0.025},${pos.y - NODE_H * 0.025}) scale(1.05)`);
     })
-    .on('mouseleave', (event) => {
+    .on('mouseleave', function(event, d) {
       hideTooltip();
-      if (!labelsVisible) {
-        d3.select(event.currentTarget).select('.node-label').attr('opacity', 0);
+      d3.select(this).select('.node-card').attr('filter', `url(#shadow-${d.type})`);
+      const pos = d._pos;
+      d3.select(this)
+        .transition().duration(150)
+        .attr('transform', `translate(${pos.x},${pos.y}) scale(1)`);
+    });
+
+  // Card background
+  nodeElements.append('rect')
+    .attr('class', 'node-card')
+    .attr('width', NODE_W)
+    .attr('height', NODE_H)
+    .attr('rx', NODE_R)
+    .attr('fill', '#16161f')
+    .attr('filter', d => `url(#shadow-${d.type})`);
+
+  // Left accent border
+  nodeElements.append('rect')
+    .attr('class', 'node-accent')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', 4)
+    .attr('height', NODE_H)
+    .attr('rx', 2)
+    .attr('fill', d => TYPE_COLORS[d.type]);
+
+  // Clip to rounded left edge
+  nodeElements.each(function(d, i) {
+    const clipId = `clip-accent-${i}`;
+    defs.append('clipPath')
+      .attr('id', clipId)
+      .append('rect')
+      .attr('x', 0).attr('y', 0)
+      .attr('width', 6).attr('height', NODE_H)
+      .attr('rx', NODE_R);
+    d3.select(this).select('.node-accent').attr('clip-path', `url(#${clipId})`);
+  });
+
+  // Title text
+  nodeElements.append('text')
+    .attr('class', 'node-title')
+    .attr('x', 14)
+    .attr('y', 28)
+    .text(d => d.title)
+    .each(function() {
+      const el = this;
+      const maxW = NODE_W - 40;
+      let text = el.textContent;
+      if (el.getComputedTextLength && el.getComputedTextLength() > maxW) {
+        while (text.length > 0 && el.getComputedTextLength() > maxW) {
+          text = text.slice(0, -1);
+          el.textContent = text + '...';
+        }
       }
     });
 
+  // Severity label text
+  nodeElements.append('text')
+    .attr('class', 'node-title')
+    .attr('x', 14)
+    .attr('y', 45)
+    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b')
+    .attr('font-size', '10px')
+    .attr('opacity', 0.7)
+    .text(d => d.severity);
+
+  // Severity dot
   nodeElements.append('circle')
-    .attr('class', d => `node-circle node-${d.type}`)
-    .attr('r', d => SEVERITY_RADIUS[d.severity] || 16)
-    .attr('fill', d => TYPE_COLORS[d.type] || '#64748b')
-    .attr('filter', d => `url(#glow-${d.type})`);
+    .attr('class', 'node-severity-dot')
+    .attr('cx', NODE_W - 16)
+    .attr('cy', NODE_H / 2)
+    .attr('r', 4)
+    .attr('fill', d => SEVERITY_COLORS[d.severity] || '#64748b');
 
-  labelElements = nodeElements.append('text')
-    .attr('class', 'node-label')
-    .attr('dy', d => (SEVERITY_RADIUS[d.severity] || 16) + 14)
-    .attr('opacity', 0)
-    .text(d => d.title.length > 20 ? d.title.slice(0, 18) + '...' : d.title);
+  // Secondary labels (toggled)
+  nodeElements.append('text')
+    .attr('class', 'node-secondary-label')
+    .attr('x', NODE_W / 2)
+    .attr('y', NODE_H + 14)
+    .text(d => d.section || '');
 
-  simulation = d3.forceSimulation(nodesData)
-    .force('link', d3.forceLink(linksData).id(d => d.id).distance(180).strength(0.3))
-    .force('charge', d3.forceManyBody().strength(-550).distanceMax(600))
-    .force('collision', d3.forceCollide().radius(d => (SEVERITY_RADIUS[d.severity] || 16) + 28).strength(1))
-    .force('x', d3.forceX(width / 2).strength(0.04))
-    .force('y', d3.forceY(height / 2).strength(0.04))
-    .alphaDecay(0.02)
-    .on('tick', ticked);
-
-  // Auto zoom-to-fit after simulation stabilizes
-  let tickCount = 0;
-  simulation.on('tick.zoomfit', () => {
-    tickCount++;
-    if (tickCount === 200) {
-      zoomToFit();
-      simulation.on('tick.zoomfit', null);
-    }
-  });
-
+  // Zoom & pan
   zoom = d3.zoom()
-    .scaleExtent([0.2, 4])
+    .scaleExtent([0.15, 3])
     .on('zoom', (event) => {
       g.attr('transform', event.transform);
     });
@@ -205,20 +377,11 @@ function initGraph(container, data, callbacks) {
     document.body.appendChild(tooltip);
   }
 
+  zoomToFit(0);
   animateIn();
 }
 
-function ticked() {
-  linkElements.select('path')
-    .attr('d', d => {
-      const dx = d.target.x - d.source.x;
-      const dy = d.target.y - d.source.y;
-      const dr = Math.sqrt(dx * dx + dy * dy) * 1.2;
-      return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-    });
-
-  nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
-}
+/* ===== Animation ===== */
 
 function animateIn() {
   nodeElements.each(function(d, i) {
@@ -226,46 +389,27 @@ function animateIn() {
       .transition()
       .delay(i * 30)
       .duration(0)
-      .on('end', function() {
-        d3.select(this).classed('visible', true);
-      });
+      .on('end', function() { d3.select(this).classed('visible', true); });
   });
 
-  const totalNodeDelay = nodesData.length * 30 + 400;
+  const totalDelay = nodesData.length * 30 + 400;
 
   linkElements.each(function(d, i) {
     d3.select(this)
       .transition()
-      .delay(totalNodeDelay + i * 20)
+      .delay(totalDelay + i * 20)
       .duration(0)
-      .on('end', function() {
-        d3.select(this).classed('visible', true);
-      });
+      .on('end', function() { d3.select(this).classed('visible', true); });
   });
 }
 
-function dragStarted(event, d) {
-  if (!event.active) simulation.alphaTarget(0.3).restart();
-  d.fx = d.x;
-  d.fy = d.y;
-}
-
-function dragged(event, d) {
-  d.fx = event.x;
-  d.fy = event.y;
-}
-
-function dragEnded(event, d) {
-  if (!event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
-}
+/* ===== Tooltips ===== */
 
 function showNodeTooltip(event, d) {
   const typeLabel = d.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   tooltip.innerHTML = `
     <div class="tt-title">${escapeHtml(d.title)}</div>
-    <div class="tt-meta">${typeLabel} &middot; ${d.section} &middot; ${d.severity}</div>
+    <div class="tt-meta">${typeLabel} &middot; ${d.section || ''} &middot; ${d.severity}</div>
   `;
   positionTooltip(event);
   tooltip.classList.add('visible');
@@ -275,7 +419,7 @@ function showLinkTooltip(event, d) {
   const typeLabel = d.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   tooltip.innerHTML = `
     <div class="tt-title">${typeLabel}</div>
-    <div class="tt-meta">${escapeHtml(d.description)}</div>
+    <div class="tt-meta">${escapeHtml(d.description || '')}</div>
   `;
   positionTooltip(event);
   tooltip.classList.add('visible');
@@ -295,6 +439,8 @@ function hideTooltip() {
   if (tooltip) tooltip.classList.remove('visible');
 }
 
+/* ===== Controls ===== */
+
 function zoomIn() {
   svg.transition().duration(300).call(zoom.scaleBy, 1.3);
 }
@@ -308,54 +454,42 @@ function resetView() {
 }
 
 function zoomToFit(duration = 600) {
-  if (!nodesData || nodesData.length === 0) return;
+  if (!contentW || !contentH) return;
 
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  nodesData.forEach(d => {
-    const r = (SEVERITY_RADIUS[d.severity] || 16) + 30;
-    if (d.x - r < minX) minX = d.x - r;
-    if (d.y - r < minY) minY = d.y - r;
-    if (d.x + r > maxX) maxX = d.x + r;
-    if (d.y + r > maxY) maxY = d.y + r;
-  });
-
-  const padding = 60;
-  minX -= padding; minY -= padding; maxX += padding; maxY += padding;
-
-  const bw = maxX - minX;
-  const bh = maxY - minY;
-  const scale = Math.min(width / bw, height / bh, 1.8);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
+  const scale = Math.min(width / contentW, height / contentH, 1.5);
+  const cx = contentW / 2;
+  const cy = contentH / 2;
 
   const transform = d3.zoomIdentity
     .translate(width / 2, height / 2)
     .scale(scale)
     .translate(-cx, -cy);
 
-  svg.transition().duration(duration).call(zoom.transform, transform);
+  if (duration > 0) {
+    svg.transition().duration(duration).call(zoom.transform, transform);
+  } else {
+    svg.call(zoom.transform, transform);
+  }
 }
 
 function toggleLabels() {
   labelsVisible = !labelsVisible;
-  if (labelElements) {
-    labelElements.attr('opacity', labelsVisible ? 1 : 0);
-  }
+  g.selectAll('.node-secondary-label').classed('visible', labelsVisible);
   return labelsVisible;
 }
 
 function centerOnNode(nodeId) {
   const node = nodesData.find(n => n.id === nodeId);
-  if (!node) return;
+  if (!node || !node._pos) return;
 
   nodeElements.classed('highlighted', false);
   nodeElements.filter(d => d.id === nodeId).classed('highlighted', true);
 
-  const scale = 1.5;
+  const scale = 1.8;
   const transform = d3.zoomIdentity
     .translate(width / 2, height / 2)
     .scale(scale)
-    .translate(-node.x, -node.y);
+    .translate(-node._pos.cx, -node._pos.cy);
 
   svg.transition().duration(600).call(zoom.transform, transform);
 
@@ -370,7 +504,6 @@ function highlightNode(nodeId) {
 }
 
 function destroyGraph() {
-  if (simulation) simulation.stop();
   hideTooltip();
 }
 
