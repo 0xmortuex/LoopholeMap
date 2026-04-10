@@ -35,6 +35,7 @@ function init() {
   document.getElementById('back-to-input').addEventListener('click', () => {
     graphView.classList.remove('active');
     inputView.classList.remove('hidden');
+    document.querySelector('.top-bar')?.classList.remove('has-analysis');
     document.getElementById('chat-panel')?.classList.remove('open');
     destroyGraph();
     analysisData = null;
@@ -126,6 +127,7 @@ function showGraphView(data) {
 
   inputView.classList.add('hidden');
   graphView.classList.add('active');
+  document.querySelector('.top-bar')?.classList.add('has-analysis');
 
   document.getElementById('reg-title').textContent = data.title;
 
