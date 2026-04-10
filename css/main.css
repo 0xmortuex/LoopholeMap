@@ -906,11 +906,13 @@ body {
   border-radius: 6px;
   padding: 6px 8px;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   transition: all var(--transition-fast);
   margin-left: 12px;
-  display: flex;
+  display: flex !important;
+  visibility: visible !important;
   align-items: center;
+  opacity: 1 !important;
 }
 
 .cusa-lock-btn:hover {
