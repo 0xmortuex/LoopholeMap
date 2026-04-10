@@ -35,7 +35,6 @@ function init() {
   document.getElementById('back-to-input').addEventListener('click', () => {
     graphView.classList.remove('active');
     inputView.classList.remove('hidden');
-    document.querySelector('.top-bar')?.classList.remove('has-analysis');
     document.getElementById('chat-panel')?.classList.remove('open');
     destroyGraph();
     analysisData = null;
@@ -70,15 +69,15 @@ function init() {
     if (e.key === 'Enter') submitGeneralQuestion();
   });
 
-  // CUSA mode
+  // CUSA mode — wire both lock buttons (input view + graph view)
   document.getElementById('cusa-lock-btn')?.addEventListener('click', toggleCusaModal);
+  document.getElementById('cusa-lock-btn-graph')?.addEventListener('click', toggleCusaModal);
   document.getElementById('cusa-activate-btn')?.addEventListener('click', activateCusa);
   document.getElementById('cusa-deactivate-btn')?.addEventListener('click', deactivateCusa);
   document.getElementById('cusa-cancel-btn')?.addEventListener('click', toggleCusaModal);
 
   if (localStorage.getItem('loopholemap_cusa_key')) {
-    document.getElementById('cusa-badge').style.display = 'inline';
-    document.getElementById('cusa-lock-btn').classList.add('active');
+    syncCusaUI(true);
   }
 
   window._showToast = showToast;
@@ -127,7 +126,6 @@ function showGraphView(data) {
 
   inputView.classList.add('hidden');
   graphView.classList.add('active');
-  document.querySelector('.top-bar')?.classList.add('has-analysis');
 
   document.getElementById('reg-title').textContent = data.title;
 
@@ -296,6 +294,15 @@ function renderStats(nodes) {
 
 /* ===== CUSA Mode ===== */
 
+function syncCusaUI(active) {
+  const display = active ? 'inline' : 'none';
+  const method = active ? 'add' : 'remove';
+  document.getElementById('cusa-badge')?.style.setProperty('display', display);
+  document.getElementById('cusa-badge-graph')?.style.setProperty('display', display);
+  document.getElementById('cusa-lock-btn')?.classList[method]('active');
+  document.getElementById('cusa-lock-btn-graph')?.classList[method]('active');
+}
+
 function toggleCusaModal() {
   const modal = document.getElementById('cusa-modal');
   modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
@@ -308,16 +315,14 @@ function activateCusa() {
   const key = document.getElementById('cusa-key-input').value.trim();
   if (!key) return;
   localStorage.setItem('loopholemap_cusa_key', key);
-  document.getElementById('cusa-badge').style.display = 'inline';
-  document.getElementById('cusa-lock-btn').classList.add('active');
+  syncCusaUI(true);
   document.getElementById('cusa-modal').style.display = 'none';
   showToast('CUSA Reference Mode activated', 'success');
 }
 
 function deactivateCusa() {
   localStorage.removeItem('loopholemap_cusa_key');
-  document.getElementById('cusa-badge').style.display = 'none';
-  document.getElementById('cusa-lock-btn').classList.remove('active');
+  syncCusaUI(false);
   document.getElementById('cusa-modal').style.display = 'none';
   showToast('CUSA Reference Mode deactivated', 'info');
 }
