@@ -316,9 +316,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: rgba(15, 18, 25, 0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: #0c0e15;
+  border-bottom: 1px solid var(--border-color);
   z-index: 200;
   flex-shrink: 0;
   height: 49px;
@@ -909,10 +908,9 @@ body {
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   margin-left: 12px;
-  display: flex !important;
-  visibility: visible !important;
+  display: flex;
+  visibility: visible;
   align-items: center;
-  opacity: 1 !important;
 }
 
 .cusa-lock-btn:hover {
