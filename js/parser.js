@@ -1,6 +1,7 @@
 const VALID_TYPES = [
   'loophole', 'exemption', 'gray-area', 'contradiction',
-  'missing-definition', 'weak-enforcement', 'scope-gap', 'sunset-clause'
+  'missing-definition', 'weak-enforcement', 'scope-gap', 'sunset-clause',
+  'constitutional-conflict', 'coj-inconsistency', 'requires-amendment'
 ];
 
 const VALID_SEVERITIES = ['critical', 'high', 'medium', 'low'];

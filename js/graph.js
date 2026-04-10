@@ -8,7 +8,10 @@ const TYPE_COLORS = {
   'missing-definition': '#6366f1',
   'weak-enforcement': '#f97316',
   'scope-gap': '#14b8a6',
-  'sunset-clause': '#64748b'
+  'sunset-clause': '#64748b',
+  'constitutional-conflict': '#dc2626',
+  'coj-inconsistency': '#f97316',
+  'requires-amendment': '#eab308'
 };
 
 const LINK_COLORS = {

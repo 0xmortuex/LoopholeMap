@@ -60,6 +60,13 @@
           </svg>
           <span class="logo-text">Loophole<span class="accent">Map</span></span>
         </div>
+        <button class="cusa-lock-btn" id="cusa-lock-btn" title="Private Mode">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
+        <span class="cusa-badge" id="cusa-badge" style="display:none;">CUSA</span>
       </div>
       <div class="top-bar-center" id="reg-title"></div>
       <div class="top-bar-right">
@@ -137,6 +144,20 @@
             <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
           </svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CUSA Key Modal ===== -->
+  <div class="cusa-modal" id="cusa-modal" style="display:none;">
+    <div class="cusa-modal-content">
+      <h4>Private Mode</h4>
+      <p>Enter your private key for enhanced analysis</p>
+      <input type="password" id="cusa-key-input" placeholder="Enter key...">
+      <div class="cusa-modal-buttons">
+        <button id="cusa-activate-btn">Activate</button>
+        <button id="cusa-deactivate-btn" style="display:none;">Deactivate</button>
+        <button id="cusa-cancel-btn">Cancel</button>
       </div>
     </div>
   </div>

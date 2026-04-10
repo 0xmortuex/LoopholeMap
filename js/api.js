@@ -1,10 +1,15 @@
 const PROXY_URL = 'https://loopholemap-proxy.mortuexhavoc.workers.dev';
 
+function getCusaKey() {
+  return localStorage.getItem('loopholemap_cusa_key') || undefined;
+}
+
 async function analyzeRegulation(text) {
+  const cusaKey = getCusaKey();
   const response = await fetch(PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'analyze', text })
+    body: JSON.stringify({ action: 'analyze', text, cusaKey })
   });
 
   if (!response.ok) {
@@ -18,6 +23,7 @@ async function analyzeRegulation(text) {
 }
 
 async function getNodeDetail(nodeData) {
+  const cusaKey = getCusaKey();
   const response = await fetch(PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +34,8 @@ async function getNodeDetail(nodeData) {
         section: nodeData.section,
         type: nodeData.type,
         description: nodeData.description
-      }
+      },
+      cusaKey
     })
   });
 
@@ -43,10 +50,11 @@ async function getNodeDetail(nodeData) {
 }
 
 async function askAI(contextType, contextData, question) {
+  const cusaKey = getCusaKey();
   const response = await fetch(PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'ask', contextType, contextData, question })
+    body: JSON.stringify({ action: 'ask', contextType, contextData, question, cusaKey })
   });
 
   if (!response.ok) {

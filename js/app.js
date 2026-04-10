@@ -69,6 +69,17 @@ function init() {
     if (e.key === 'Enter') submitGeneralQuestion();
   });
 
+  // CUSA mode
+  document.getElementById('cusa-lock-btn')?.addEventListener('click', toggleCusaModal);
+  document.getElementById('cusa-activate-btn')?.addEventListener('click', activateCusa);
+  document.getElementById('cusa-deactivate-btn')?.addEventListener('click', deactivateCusa);
+  document.getElementById('cusa-cancel-btn')?.addEventListener('click', toggleCusaModal);
+
+  if (localStorage.getItem('loopholemap_cusa_key')) {
+    document.getElementById('cusa-badge').style.display = 'inline';
+    document.getElementById('cusa-lock-btn').classList.add('active');
+  }
+
   window._showToast = showToast;
 }
 
@@ -152,10 +163,20 @@ function renderSidePanel(data) {
   renderStats(data.nodes);
 }
 
+const CUSA_TYPES = ['constitutional-conflict', 'coj-inconsistency', 'requires-amendment'];
+const CUSA_TYPE_LABELS = {
+  'constitutional-conflict': 'Constitutional Conflict',
+  'coj-inconsistency': 'CoJ Inconsistency',
+  'requires-amendment': 'Requires Amendment'
+};
+
 function renderLegend() {
   const container = document.getElementById('legend-content');
-  const typeItems = VALID_TYPES.map(t => {
-    const label = t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const isCusa = !!localStorage.getItem('loopholemap_cusa_key');
+  const shownTypes = isCusa ? VALID_TYPES : VALID_TYPES.filter(t => !CUSA_TYPES.includes(t));
+
+  const typeItems = shownTypes.map(t => {
+    const label = CUSA_TYPE_LABELS[t] || t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     return `<div class="legend-item"><span class="legend-dot" style="background: ${TYPE_COLORS[t]}"></span>${label}</div>`;
   }).join('');
 
@@ -270,6 +291,36 @@ function renderStats(nodes) {
     </div>
   `;
 }
+
+/* ===== CUSA Mode ===== */
+
+function toggleCusaModal() {
+  const modal = document.getElementById('cusa-modal');
+  modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+  const key = localStorage.getItem('loopholemap_cusa_key');
+  document.getElementById('cusa-deactivate-btn').style.display = key ? 'inline-block' : 'none';
+  if (key) document.getElementById('cusa-key-input').value = key;
+}
+
+function activateCusa() {
+  const key = document.getElementById('cusa-key-input').value.trim();
+  if (!key) return;
+  localStorage.setItem('loopholemap_cusa_key', key);
+  document.getElementById('cusa-badge').style.display = 'inline';
+  document.getElementById('cusa-lock-btn').classList.add('active');
+  document.getElementById('cusa-modal').style.display = 'none';
+  showToast('CUSA Reference Mode activated', 'success');
+}
+
+function deactivateCusa() {
+  localStorage.removeItem('loopholemap_cusa_key');
+  document.getElementById('cusa-badge').style.display = 'none';
+  document.getElementById('cusa-lock-btn').classList.remove('active');
+  document.getElementById('cusa-modal').style.display = 'none';
+  showToast('CUSA Reference Mode deactivated', 'info');
+}
+
+/* ===== General Chat ===== */
 
 function setupChatStarters() {
   const starterArea = document.getElementById('chat-panel-starters');
