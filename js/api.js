@@ -42,4 +42,21 @@ async function getNodeDetail(nodeData) {
   return data.result;
 }
 
-export { analyzeRegulation, getNodeDetail };
+async function askAI(contextType, contextData, question) {
+  const response = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'ask', contextType, contextData, question })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Ask failed (${response.status}): ${errText || 'Server error'}`);
+  }
+
+  const data = await response.json();
+  if (!data.result) throw new Error('Empty ask response');
+  return data.result;
+}
+
+export { analyzeRegulation, getNodeDetail, askAI };

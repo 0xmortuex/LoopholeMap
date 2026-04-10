@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/graph.css">
   <link rel="stylesheet" href="css/modal.css">
+  <link rel="stylesheet" href="css/chat.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 </head>
 <body>
@@ -105,6 +106,14 @@
       <!-- Graph Container -->
       <div class="graph-container" id="graph-container"></div>
 
+      <!-- Ask AI FAB -->
+      <button class="ask-ai-fab" id="ask-ai-fab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Ask AI
+      </button>
+
       <!-- Graph Controls -->
       <div class="graph-controls">
         <button class="btn btn-ghost" id="zoom-in" title="Zoom In">
@@ -128,6 +137,29 @@
             <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
           </svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== General Chat Panel ===== -->
+  <div class="chat-panel" id="chat-panel">
+    <div class="chat-panel-header">
+      <span class="chat-panel-title">Ask about this analysis</span>
+      <button class="chat-panel-close" id="chat-panel-close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="chat-panel-context">
+      <div class="chat-panel-context-text" id="chat-panel-context-text"></div>
+    </div>
+    <div class="chat-panel-starters" id="chat-panel-starters"></div>
+    <div class="chat-panel-messages" id="chat-panel-messages"></div>
+    <div class="chat-panel-input-area">
+      <div class="chat-panel-input-row">
+        <input class="chat-panel-input" id="chat-panel-input" placeholder="Ask anything about this regulation...">
+        <button class="chat-panel-send" id="chat-panel-send">Send</button>
       </div>
     </div>
   </div>

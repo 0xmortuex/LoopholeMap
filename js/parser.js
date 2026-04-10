@@ -109,4 +109,26 @@ function parseDetailResponse(raw) {
   };
 }
 
-export { parseAnalysisResponse, parseDetailResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES };
+function parseAskResponse(raw) {
+  let parsed;
+
+  if (typeof raw === 'string') {
+    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      return { answer: raw, followUpSuggestions: [] };
+    }
+  } else {
+    parsed = raw;
+  }
+
+  return {
+    answer: typeof parsed.answer === 'string' ? parsed.answer : 'No answer received.',
+    followUpSuggestions: Array.isArray(parsed.followUpSuggestions)
+      ? parsed.followUpSuggestions.filter(s => typeof s === 'string').slice(0, 3)
+      : []
+  };
+}
+
+export { parseAnalysisResponse, parseDetailResponse, parseAskResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES };

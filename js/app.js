@@ -1,5 +1,5 @@
-import { analyzeRegulation } from './api.js';
-import { parseAnalysisResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES } from './parser.js';
+import { analyzeRegulation, askAI } from './api.js';
+import { parseAnalysisResponse, parseAskResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES } from './parser.js';
 import { initGraph, destroyGraph, zoomIn, zoomOut, resetView, toggleLabels, centerOnNode, highlightNode, TYPE_COLORS, LINK_COLORS } from './graph.js';
 import { initModal, openModal } from './modal.js';
 import { SAMPLE_REGULATION } from './samples.js';
@@ -8,6 +8,7 @@ const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
 let analysisData = null;
 let panelCollapsed = false;
+let generalChatMessages = [];
 
 function init() {
   const textarea = document.getElementById('regulation-input');
@@ -34,8 +35,10 @@ function init() {
   document.getElementById('back-to-input').addEventListener('click', () => {
     graphView.classList.remove('active');
     inputView.classList.remove('hidden');
+    document.getElementById('chat-panel')?.classList.remove('open');
     destroyGraph();
     analysisData = null;
+    generalChatMessages = [];
   });
 
   document.getElementById('zoom-in').addEventListener('click', zoomIn);
@@ -49,6 +52,21 @@ function init() {
   document.getElementById('panel-toggle').addEventListener('click', () => {
     panelCollapsed = !panelCollapsed;
     document.querySelector('.side-panel').classList.toggle('collapsed', panelCollapsed);
+  });
+
+  // General Ask AI FAB
+  document.getElementById('ask-ai-fab')?.addEventListener('click', () => {
+    const panel = document.getElementById('chat-panel');
+    panel.classList.toggle('open');
+  });
+
+  document.getElementById('chat-panel-close-btn')?.addEventListener('click', () => {
+    document.getElementById('chat-panel').classList.remove('open');
+  });
+
+  document.getElementById('chat-panel-send')?.addEventListener('click', submitGeneralQuestion);
+  document.getElementById('chat-panel-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitGeneralQuestion();
   });
 
   window._showToast = showToast;
@@ -109,6 +127,14 @@ function showGraphView(data) {
   renderSidePanel(data);
 
   initModal(data.nodes, data.connections);
+
+  // Set up general chat panel
+  generalChatMessages = [];
+  const ctxEl = document.getElementById('chat-panel-context-text');
+  if (ctxEl) ctxEl.textContent = data.summary;
+  const msgsEl = document.getElementById('chat-panel-messages');
+  if (msgsEl) msgsEl.innerHTML = '';
+  setupChatStarters();
 
   setTimeout(() => {
     const container = document.querySelector('.graph-container');
@@ -243,6 +269,92 @@ function renderStats(nodes) {
       ${sevCount.low ? `<div class="mini-bar-segment" style="width: ${(sevCount.low/total)*100}%; background: var(--accent-slate)"></div>` : ''}
     </div>
   `;
+}
+
+function setupChatStarters() {
+  const starterArea = document.getElementById('chat-panel-starters');
+  if (!starterArea) return;
+  const starters = [
+    "What's the most dangerous loophole overall?",
+    "If I could only fix 3 things, which should I prioritize?",
+    "Who benefits most from these loopholes?",
+    "How does this compare to similar regulations?"
+  ];
+  starterArea.innerHTML = starters.map(s =>
+    `<span class="chat-suggestion-chip chat-starter-chip">${escapeHtml(s)}</span>`
+  ).join('');
+  starterArea.querySelectorAll('.chat-starter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const input = document.getElementById('chat-panel-input');
+      if (input) {
+        input.value = chip.textContent;
+        submitGeneralQuestion();
+      }
+    });
+  });
+}
+
+function buildGeneralContext() {
+  if (!analysisData) return '';
+  const nodeSummary = analysisData.nodes.map(n =>
+    `- [${n.type}] ${n.title} (${n.severity})`
+  ).join('\n');
+  return `Regulation: ${analysisData.title}\nOverall Assessment: ${analysisData.summary}\nNodes found:\n${nodeSummary}`;
+}
+
+async function submitGeneralQuestion() {
+  const input = document.getElementById('chat-panel-input');
+  const sendBtn = document.getElementById('chat-panel-send');
+  const msgsEl = document.getElementById('chat-panel-messages');
+  const starterArea = document.getElementById('chat-panel-starters');
+  if (!input || !input.value.trim() || !msgsEl) return;
+
+  const question = input.value.trim();
+  input.value = '';
+  sendBtn.disabled = true;
+  if (starterArea) starterArea.style.display = 'none';
+
+  generalChatMessages.push({ role: 'user', text: question });
+  msgsEl.innerHTML = renderGeneralMessages();
+  msgsEl.innerHTML += `<div class="chat-loading"><span class="chat-loading-dot"></span><span class="chat-loading-dot"></span><span class="chat-loading-dot"></span></div>`;
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  try {
+    const raw = await askAI('general', buildGeneralContext(), question);
+    const parsed = parseAskResponse(raw);
+    generalChatMessages.push({ role: 'ai', text: parsed.answer, followUps: parsed.followUpSuggestions });
+    msgsEl.innerHTML = renderGeneralMessages();
+
+    // Add follow-up chips
+    if (parsed.followUpSuggestions.length > 0) {
+      const fuDiv = document.createElement('div');
+      fuDiv.className = 'chat-panel-followups';
+      parsed.followUpSuggestions.forEach(s => {
+        const chip = document.createElement('span');
+        chip.className = 'chat-suggestion-chip';
+        chip.textContent = s;
+        chip.addEventListener('click', () => {
+          input.value = s;
+          submitGeneralQuestion();
+        });
+        fuDiv.appendChild(chip);
+      });
+      msgsEl.appendChild(fuDiv);
+    }
+  } catch (err) {
+    generalChatMessages.push({ role: 'ai', text: `Error: ${err.message}` });
+    msgsEl.innerHTML = renderGeneralMessages();
+  }
+
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function renderGeneralMessages() {
+  return generalChatMessages.map(m =>
+    `<div class="chat-msg ${m.role}">${escapeHtml(m.text)}</div>`
+  ).join('');
 }
 
 function showToast(message, type = 'info') {
