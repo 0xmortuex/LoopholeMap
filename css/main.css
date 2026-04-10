@@ -894,28 +894,33 @@ body {
 
 /* ===== CUSA Mode ===== */
 .cusa-lock-btn {
-  background: none;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: #e2e8f0;
   transition: all var(--transition-fast);
   margin-left: 12px;
   display: flex;
-  visibility: visible;
   align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
 }
 
 .cusa-lock-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(34, 197, 94, 0.5);
   color: var(--text-primary);
-  border-color: var(--accent-green);
 }
 
 .cusa-lock-btn.active {
   color: var(--accent-green);
   border-color: var(--accent-green);
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .cusa-badge {
