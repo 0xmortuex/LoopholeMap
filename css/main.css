@@ -327,6 +327,24 @@ body {
   font-size: 1.15rem;
 }
 
+.new-analysis-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+  margin-left: 12px;
+}
+
+.new-analysis-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .top-bar-center {
   font-family: var(--font-body);
   font-weight: 500;

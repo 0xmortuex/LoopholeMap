@@ -32,13 +32,21 @@ function init() {
     }
   });
 
-  document.getElementById('back-to-input').addEventListener('click', () => {
+  function goToInput() {
     graphView.classList.remove('active');
     inputView.classList.remove('hidden');
     document.getElementById('chat-panel')?.classList.remove('open');
     destroyGraph();
     analysisData = null;
     generalChatMessages = [];
+  }
+
+  document.getElementById('back-to-input').addEventListener('click', goToInput);
+
+  document.getElementById('new-analysis-btn')?.addEventListener('click', () => {
+    goToInput();
+    textarea.value = '';
+    textarea.focus();
   });
 
   document.getElementById('zoom-in').addEventListener('click', zoomIn);
