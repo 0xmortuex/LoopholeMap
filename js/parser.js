@@ -35,9 +35,16 @@ function parseAnalysisResponse(raw) {
   }
 
   const nodeIds = new Set(nodes.map(n => n.id));
-  const connections = (parsed.connections || [])
+  let connections = (parsed.connections || [])
     .map(c => validateConnection(c, nodeIds))
     .filter(Boolean);
+
+  // Fall back to nodes[].connectedNodes when the model didn't return a
+  // connections array (or returned an empty one) — still gives the graph
+  // something to link.
+  if (connections.length === 0) {
+    connections = buildConnectionsFromConnectedNodes(nodes, nodeIds);
+  }
 
   return {
     title: typeof parsed.title === 'string' ? parsed.title : 'Regulation Analysis',
@@ -60,8 +67,26 @@ function validateNode(node, index) {
   const exploitation = typeof node.exploitation === 'string' ? node.exploitation : '';
   const realWorldParallel = typeof node.realWorldParallel === 'string' ? node.realWorldParallel : '';
   const suggestedFix = typeof node.suggestedFix === 'string' ? node.suggestedFix : '';
+  const connectedNodes = Array.isArray(node.connectedNodes)
+    ? node.connectedNodes.filter(x => typeof x === 'string')
+    : [];
 
-  return { id, title, type, severity, section, description, exploitation, realWorldParallel, suggestedFix };
+  return { id, title, type, severity, section, description, exploitation, realWorldParallel, suggestedFix, connectedNodes };
+}
+
+function buildConnectionsFromConnectedNodes(nodes, nodeIds) {
+  const seenPairs = new Set();
+  const connections = [];
+  nodes.forEach(node => {
+    (node.connectedNodes || []).forEach(targetId => {
+      if (!nodeIds.has(targetId) || targetId === node.id) return;
+      const pairKey = [node.id, targetId].sort().join('|');
+      if (seenPairs.has(pairKey)) return;
+      seenPairs.add(pairKey);
+      connections.push({ source: node.id, target: targetId, type: 'enables', description: '' });
+    });
+  });
+  return connections;
 }
 
 function validateConnection(conn, nodeIds) {

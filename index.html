@@ -11,188 +11,202 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/graph.css">
-  <link rel="stylesheet" href="css/modal.css">
-  <link rel="stylesheet" href="css/chat.css">
+  <link rel="stylesheet" href="css/panel.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 </head>
 <body>
 
-  <!-- ===== Input View ===== -->
-  <div class="input-view">
-    <!-- Floating lock icon (top-right) -->
-    <div class="input-view-actions">
-      <button class="cusa-lock-btn" id="cusa-lock-btn" title="Private Mode">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        Private
-      </button>
-      <span class="cusa-badge" id="cusa-badge" style="display:none;">CUSA</span>
-    </div>
-    <div class="input-card">
-      <div class="logo input-logo">
-        <svg class="logo-icon" viewBox="0 0 64 64" fill="none">
+  <!-- ===== App Header ===== -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand" id="brand-home" title="LoopholeMap">
+        <svg class="brand-icon" viewBox="0 0 64 64" fill="none">
           <rect x="14" y="8" width="28" height="36" rx="3" stroke="#ef4444" stroke-width="2.5" fill="#0f1219"/>
-          <line x1="20" y1="16" x2="36" y2="16" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
-          <line x1="20" y1="22" x2="36" y2="22" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
-          <line x1="20" y1="28" x2="30" y2="28" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
           <circle cx="42" cy="42" r="12" stroke="#ef4444" stroke-width="3" fill="none"/>
           <line x1="50.5" y1="50.5" x2="58" y2="58" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
-          <path d="M37 39 L40 42 L47 35" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
-        <span class="logo-text">Loophole<span class="accent">Map</span></span>
+        <span class="brand-text">Loophole<span class="accent">Map</span></span>
       </div>
-      <p class="tagline">Find the cracks in any regulation</p>
-      <textarea id="regulation-input" class="input-textarea" placeholder="Paste any regulation, law, or policy..." spellcheck="false"></textarea>
-      <div class="btn-row">
-        <button id="scan-btn" class="btn btn-primary">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
-          </svg>
-          Scan for Loopholes
-        </button>
-        <button id="sample-btn" class="btn btn-secondary">Load Sample</button>
-        <span class="scan-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to scan</span>
-      </div>
+      <div class="reg-title" id="reg-title"></div>
     </div>
-  </div>
-
-  <!-- ===== Graph View ===== -->
-  <div class="graph-view">
-    <!-- Top Bar (only in graph view) -->
-    <div class="top-bar">
-      <div class="top-bar-left">
-        <div class="logo" id="back-to-input" title="Back to input">
-          <svg class="logo-icon" viewBox="0 0 64 64" fill="none" style="width:24px;height:24px">
-            <rect x="14" y="8" width="28" height="36" rx="3" stroke="#ef4444" stroke-width="2.5" fill="#0f1219"/>
-            <circle cx="42" cy="42" r="12" stroke="#ef4444" stroke-width="3" fill="none"/>
-            <line x1="50.5" y1="50.5" x2="58" y2="58" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+    <div class="header-right">
+      <span class="risk-badge" id="risk-badge" hidden></span>
+      <span class="node-count" id="node-count" hidden></span>
+      <button class="rail-toggle-btn" id="rail-toggle-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <div class="settings-wrap">
+        <button class="settings-btn" id="settings-btn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          <span class="logo-text">Loophole<span class="accent">Map</span></span>
+          <span class="cusa-dot" id="cusa-dot" hidden></span>
+        </button>
+        <div class="settings-popover" id="settings-popover" hidden>
+          <div class="settings-popover-title">Private Reference Mode</div>
+          <p class="settings-popover-hint">Enter a private key for enhanced analysis. Stored only in this browser.</p>
+          <input type="password" id="cusa-key-input" placeholder="Enter key...">
+          <div class="settings-popover-buttons">
+            <button id="cusa-activate-btn" class="btn btn-primary btn-sm">Activate</button>
+            <button id="cusa-deactivate-btn" class="btn btn-ghost btn-sm" hidden>Deactivate</button>
+          </div>
+          <span class="cusa-status" id="cusa-status"></span>
         </div>
-        <button class="new-analysis-btn" id="new-analysis-btn" title="Start a new analysis">&#8592; New Analysis</button>
-      </div>
-      <div class="top-bar-center" id="reg-title"></div>
-      <div class="top-bar-right">
-        <span class="risk-badge" id="risk-badge"></span>
-        <span class="node-count" id="node-count"></span>
-        <button class="cusa-lock-btn" id="cusa-lock-btn-graph" title="Private Mode">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          Private
-        </button>
-        <span class="cusa-badge" id="cusa-badge-graph" style="display:none;">CUSA</span>
       </div>
     </div>
+  </header>
 
-    <!-- Main Graph Area -->
-    <div class="graph-main">
-      <!-- Side Panel -->
-      <div class="side-panel" id="side-panel">
-        <div class="side-panel-inner">
-          <div class="panel-card">
-            <div class="panel-card-title">Overall Assessment</div>
+  <!-- ===== App Shell ===== -->
+  <div class="app-shell">
+
+    <!-- ===== Left Rail ===== -->
+    <aside class="left-rail" id="left-rail">
+      <div class="rail-inner">
+
+        <section class="rail-section" id="scan-section">
+          <p class="tagline">Find the cracks in any regulation</p>
+          <textarea id="regulation-input" class="input-textarea" placeholder="Paste any regulation, law, or policy..." spellcheck="false"></textarea>
+          <div class="input-meta">
+            <span class="char-count" id="char-count"></span>
+          </div>
+          <div class="btn-col">
+            <button id="scan-btn" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <span class="scan-btn-label">Scan for Loopholes</span>
+            </button>
+            <button id="sample-btn" class="btn btn-secondary">Load Sample</button>
+          </div>
+          <span class="scan-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to scan</span>
+        </section>
+
+        <section class="rail-section rail-collapsible" id="risk-section" hidden>
+          <button class="rail-section-header" data-collapse-target="risk-body">
+            <span>Risk Overview</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="rail-section-body" id="risk-body">
+            <div class="gauge-wrap">
+              <svg class="gauge" id="gauge-svg" viewBox="0 0 160 100" aria-hidden="true">
+                <path class="gauge-track" d="M10,90 A70,70 0 0,1 150,90" />
+                <path class="gauge-fill" id="gauge-fill" d="M10,90 A70,70 0 0,1 150,90" />
+                <circle class="gauge-needle-hub" cx="80" cy="90" r="4"/>
+                <line class="gauge-needle" id="gauge-needle" x1="80" y1="90" x2="80" y2="30" />
+              </svg>
+              <div class="gauge-label" id="gauge-label">—</div>
+            </div>
             <div class="assessment-text" id="assessment-text"></div>
           </div>
-          <div class="panel-card">
-            <div class="panel-card-title">Legend</div>
+        </section>
+
+        <section class="rail-section rail-collapsible" id="filter-section" hidden>
+          <button class="rail-section-header" data-collapse-target="filter-body">
+            <span>Filters</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="rail-section-body" id="filter-body">
+            <div class="filter-group">
+              <div class="filter-group-label">Severity</div>
+              <div class="chip-row" id="severity-filters"></div>
+            </div>
+            <div class="filter-group">
+              <div class="filter-group-label">Type</div>
+              <div class="chip-row" id="type-filters"></div>
+            </div>
+            <button class="clear-filters-btn" id="clear-filters-btn" hidden>Clear filters</button>
+          </div>
+        </section>
+
+        <section class="rail-section rail-collapsible" id="legend-section" hidden>
+          <button class="rail-section-header" data-collapse-target="legend-body">
+            <span>Legend</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="rail-section-body" id="legend-body">
             <div id="legend-content"></div>
           </div>
-          <div class="panel-card">
-            <div class="panel-card-title">All Issues</div>
+        </section>
+
+        <section class="rail-section rail-collapsible collapsed" id="issues-section" hidden>
+          <button class="rail-section-header" data-collapse-target="issues-body">
+            <span>All Issues</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="rail-section-body" id="issues-body">
             <div class="node-list" id="node-list"></div>
           </div>
-          <div class="panel-card">
-            <div class="panel-card-title">Statistics</div>
-            <div id="stats-content"></div>
-          </div>
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- ===== Center Canvas ===== -->
+    <main class="canvas-area">
+      <div class="graph-canvas" id="graph-canvas">
+        <div class="empty-state" id="empty-state">
+          <svg viewBox="0 0 64 64" fill="none" class="empty-state-icon">
+            <rect x="14" y="8" width="28" height="36" rx="3" stroke="#334155" stroke-width="2.5" fill="none"/>
+            <circle cx="42" cy="42" r="12" stroke="#334155" stroke-width="3" fill="none"/>
+            <line x1="50.5" y1="50.5" x2="58" y2="58" stroke="#334155" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+          <p>Paste a regulation on the left and scan it to map its loopholes.</p>
         </div>
       </div>
 
-      <button class="panel-toggle" id="panel-toggle" title="Toggle side panel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
-      </button>
+      <div class="graph-controls">
+        <button class="ctrl-btn" id="zoom-in" title="Zoom In" aria-label="Zoom in">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6M11 8v6"/></svg>
+        </button>
+        <button class="ctrl-btn" id="zoom-out" title="Zoom Out" aria-label="Zoom out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>
+        </button>
+        <button class="ctrl-btn" id="reset-view" title="Reset View" aria-label="Reset view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button class="ctrl-btn" id="toggle-labels" title="Toggle Labels" aria-label="Toggle labels">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+        </button>
+      </div>
 
-      <div class="graph-container" id="graph-container"></div>
-
-      <button class="ask-ai-fab" id="ask-ai-fab">
+      <button class="ask-fab" id="ask-fab" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         Ask AI
       </button>
+    </main>
 
-      <div class="graph-controls">
-        <button class="btn btn-ghost" id="zoom-in" title="Zoom In">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6M11 8v6"/>
-          </svg>
-        </button>
-        <button class="btn btn-ghost" id="zoom-out" title="Zoom Out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6"/>
-          </svg>
-        </button>
-        <button class="btn btn-ghost" id="reset-view" title="Reset View">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-          </svg>
-        </button>
-        <button class="btn btn-ghost" id="toggle-labels" title="Toggle Labels">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
-          </svg>
+    <!-- ===== Right Panel (Detail / Ask) ===== -->
+    <aside class="side-panel" id="side-panel">
+      <div class="side-panel-header">
+        <div class="panel-tabs">
+          <button class="panel-tab active" id="tab-detail" data-tab="detail">Detail</button>
+          <button class="panel-tab" id="tab-ask" data-tab="ask">Ask AI</button>
+        </div>
+        <button class="panel-close" id="panel-close" aria-label="Close panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
-    </div>
-  </div>
 
-  <!-- ===== CUSA Key Modal ===== -->
-  <div class="cusa-modal" id="cusa-modal" style="display:none;">
-    <div class="cusa-modal-content">
-      <h4>Private Mode</h4>
-      <p>Enter your private key for enhanced analysis</p>
-      <input type="password" id="cusa-key-input" placeholder="Enter key...">
-      <div class="cusa-modal-buttons">
-        <button id="cusa-activate-btn">Activate</button>
-        <button id="cusa-deactivate-btn" style="display:none;">Deactivate</button>
-        <button id="cusa-cancel-btn">Cancel</button>
+      <div class="panel-body">
+        <div class="panel-view" id="detail-view"></div>
+
+        <div class="panel-view" id="chat-view" hidden>
+          <div class="chat-context" id="chat-context"></div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-starters" id="chat-starters"></div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" placeholder="Ask anything about this regulation...">
+            <button class="chat-send-btn" id="chat-send-btn" aria-label="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </aside>
 
-  <!-- ===== General Chat Panel ===== -->
-  <div class="chat-panel" id="chat-panel">
-    <div class="chat-panel-header">
-      <span class="chat-panel-title">Ask about this analysis</span>
-      <button class="chat-panel-close" id="chat-panel-close-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
-    <div class="chat-panel-context">
-      <div class="chat-panel-context-text" id="chat-panel-context-text"></div>
-    </div>
-    <div class="chat-panel-starters" id="chat-panel-starters"></div>
-    <div class="chat-panel-messages" id="chat-panel-messages"></div>
-    <div class="chat-panel-input-area">
-      <div class="chat-panel-input-row">
-        <input class="chat-panel-input" id="chat-panel-input" placeholder="Ask anything about this regulation...">
-        <button class="chat-panel-send" id="chat-panel-send">Send</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Modal ===== -->
-  <div class="modal-backdrop" id="modal-backdrop">
-    <div class="modal"></div>
   </div>
 
   <!-- ===== Tooltip ===== -->
