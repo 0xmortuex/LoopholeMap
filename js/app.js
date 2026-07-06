@@ -460,6 +460,7 @@ function wireGraphControls() {
   $('toggle-labels').addEventListener('click', () => {
     const visible = toggleLabels();
     $('toggle-labels').title = visible ? 'Hide Labels' : 'Show Labels';
+    $('toggle-labels').classList.toggle('active', visible);
   });
 }
 
