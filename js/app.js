@@ -18,19 +18,17 @@ let gaugePathLength = null;
 
 function $(id) { return document.getElementById(id); }
 
-function isCusaActive() {
-  return !!localStorage.getItem('loopholemap_cusa_key');
-}
-
 function isRpLegalMode() {
-  return RP_LEGAL_REFERENCES_ENABLED || isCusaActive();
+  // The RP Constitution + Code of Justice are always loaded and injected by the
+  // frontend now, so the RP legal issue types are always available. (The old
+  // secret "private reference mode" has been removed.)
+  return RP_LEGAL_REFERENCES_ENABLED;
 }
 
 function init() {
   wireScanSection();
   wireRailToggle();
   wireCollapsibles();
-  wireSettings();
   wireAskFab();
 
   initPanel([], [], { onJumpToNode: (id) => centerOnNode(id) });
@@ -410,57 +408,6 @@ function wireCollapsibles() {
       header.closest('.rail-collapsible').classList.toggle('collapsed');
     });
   });
-}
-
-/* ===== Settings / CUSA ===== */
-
-function wireSettings() {
-  const btn = $('settings-btn');
-  const popover = $('settings-popover');
-
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    popover.hidden = !popover.hidden;
-    if (!popover.hidden) syncCusaInputs();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!popover.hidden && !popover.contains(e.target) && e.target !== btn) {
-      popover.hidden = true;
-    }
-  });
-
-  $('cusa-activate-btn').addEventListener('click', () => {
-    const key = $('cusa-key-input').value.trim();
-    if (!key) return;
-    localStorage.setItem('loopholemap_cusa_key', key);
-    syncCusaDot();
-    syncCusaInputs();
-    $('cusa-status').textContent = 'Private mode activated';
-    if (analysisData) { renderLegend(); renderFilters(analysisData.nodes); }
-    showToast('Private reference mode activated', 'success');
-  });
-
-  $('cusa-deactivate-btn').addEventListener('click', () => {
-    localStorage.removeItem('loopholemap_cusa_key');
-    syncCusaDot();
-    syncCusaInputs();
-    $('cusa-status').textContent = 'Private mode deactivated';
-    if (analysisData) { renderLegend(); renderFilters(analysisData.nodes); }
-    showToast('Private reference mode deactivated', 'info');
-  });
-
-  syncCusaDot();
-}
-
-function syncCusaDot() {
-  $('cusa-dot').hidden = !isCusaActive();
-}
-
-function syncCusaInputs() {
-  const active = isCusaActive();
-  $('cusa-deactivate-btn').hidden = !active;
-  $('cusa-key-input').value = active ? localStorage.getItem('loopholemap_cusa_key') : '';
 }
 
 function wireAskFab() {

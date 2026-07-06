@@ -13,10 +13,6 @@ const WARN_INPUT_CHARS = Math.round(MAX_INPUT_CHARS * 0.85);
 // room before treating the request as hung.
 const REQUEST_TIMEOUT_MS = 45000;
 
-function getCusaKey() {
-  return localStorage.getItem('loopholemap_cusa_key') || undefined;
-}
-
 function checkInputLength(text) {
   if (typeof text !== 'string') return;
   if (text.length > MAX_INPUT_CHARS) {
@@ -65,7 +61,6 @@ async function postToProxy(body) {
 
 async function analyzeRegulation(text) {
   checkInputLength(text);
-  const cusaKey = getCusaKey();
   const rpLegalRequest = await buildRpLegalAnalysisText(text, {
     maxTotalChars: MAX_REQUEST_CHARS
   });
@@ -73,13 +68,11 @@ async function analyzeRegulation(text) {
   return postToProxy({
     action: 'analyze',
     text: rpLegalRequest.text,
-    cusaKey,
     rpLegalContext: rpLegalRequest.metadata
   });
 }
 
 async function getNodeDetail(nodeData) {
-  const cusaKey = getCusaKey();
   const referenceContext = await buildRpLegalReferenceContext(
     `${nodeData.title}\n${nodeData.section || ''}\n${nodeData.type}\n${nodeData.description || ''}`,
     { maxChars: 7000 }
@@ -101,13 +94,11 @@ async function getNodeDetail(nodeData) {
         referenceContext.text
       ].join('\n')
     },
-    cusaKey,
     rpLegalContext: referenceContext.metadata
   });
 }
 
 async function askAI(contextType, contextData, question) {
-  const cusaKey = getCusaKey();
   const referenceContext = await buildRpLegalReferenceContext(
     `${contextData}\n${question}`,
     { maxChars: 7000 }
@@ -124,7 +115,6 @@ async function askAI(contextType, contextData, question) {
     contextType,
     contextData: enrichedContextData,
     question,
-    cusaKey,
     rpLegalContext: referenceContext.metadata
   });
 }
