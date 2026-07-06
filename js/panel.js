@@ -1,6 +1,6 @@
 import { getNodeDetail, askAI } from './api.js';
 import { parseDetailResponse, parseAskResponse } from './parser.js';
-import { TYPE_COLORS } from './graph.js';
+import { TYPE_COLORS } from './board.js';
 
 const deepDiveCache = new Map();
 let allNodes = [];

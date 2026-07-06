@@ -1,10 +1,9 @@
 import { analyzeRegulation, MAX_INPUT_CHARS, WARN_INPUT_CHARS } from './api.js';
 import { parseAnalysisResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES } from './parser.js';
 import {
-  initGraph, destroyGraph, zoomIn, zoomOut, resetView, toggleLabels,
-  centerOnNode, setFilters, clearFocus,
-  TYPE_COLORS, TYPE_GLYPHS, LINK_STYLES, SEVERITY_COLORS
-} from './graph.js';
+  initBoard, destroyBoard, centerOnNode, setFilters, clearFocus,
+  TYPE_COLORS, TYPE_GLYPHS, SEVERITY_COLORS
+} from './board.js';
 import { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel } from './panel.js';
 import { SAMPLE_REGULATION } from './samples.js';
 
@@ -27,7 +26,6 @@ function init() {
   wireRailToggle();
   wireCollapsibles();
   wireSettings();
-  wireGraphControls();
   wireAskFab();
 
   initPanel([], [], { onJumpToNode: (id) => centerOnNode(id) });
@@ -162,7 +160,7 @@ async function startScan(text) {
 function showGraphView(data) {
   closePanel();
   clearFocus();
-  destroyGraph();
+  destroyBoard();
 
   $('reg-title').textContent = data.title;
 
@@ -194,12 +192,12 @@ function showGraphView(data) {
   setOverallContext(buildOverallContextText(data));
 
   $('ask-fab').hidden = false;
+  $('board-toolbar').hidden = false;
 
   requestAnimationFrame(() => {
     const container = $('graph-canvas');
-    initGraph(container, data, {
-      onNodeClick: (node) => openNodeDetail(node),
-      onBackgroundClick: () => {}
+    initBoard(container, data, {
+      onCardClick: (node) => openNodeDetail(node)
     });
   });
 }
@@ -440,19 +438,6 @@ function syncCusaInputs() {
   const active = isCusaActive();
   $('cusa-deactivate-btn').hidden = !active;
   $('cusa-key-input').value = active ? localStorage.getItem('loopholemap_cusa_key') : '';
-}
-
-/* ===== Graph controls ===== */
-
-function wireGraphControls() {
-  $('zoom-in').addEventListener('click', zoomIn);
-  $('zoom-out').addEventListener('click', zoomOut);
-  $('reset-view').addEventListener('click', resetView);
-  $('toggle-labels').addEventListener('click', () => {
-    const visible = toggleLabels();
-    $('toggle-labels').title = visible ? 'Hide Labels' : 'Show Labels';
-    $('toggle-labels').classList.toggle('active', visible);
-  });
 }
 
 function wireAskFab() {

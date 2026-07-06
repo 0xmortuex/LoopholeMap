@@ -1,7 +1,7 @@
 // Shared motion helpers — single source of truth for prefers-reduced-motion
-// gating across graph.js / panel.js / app.js. CSS keyframe/transition motion
+// gating across board.js / panel.js / app.js. CSS keyframe/transition motion
 // is gated separately in css/main.css via a blanket @media rule; this module
-// covers JS-driven motion (D3 transitions, zoom/pan, computed durations).
+// covers JS-driven motion (FLIP regroup transforms, computed durations).
 
 const reduceMotionQuery = typeof window !== 'undefined' && window.matchMedia
   ? window.matchMedia('(prefers-reduced-motion: reduce)')

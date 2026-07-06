@@ -10,9 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
-  <link rel="stylesheet" href="css/graph.css">
+  <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/panel.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 </head>
 <body>
 
@@ -155,19 +154,12 @@
         </div>
       </div>
 
-      <div class="graph-controls">
-        <button class="ctrl-btn" id="zoom-in" title="Zoom In" aria-label="Zoom in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6M11 8v6"/></svg>
-        </button>
-        <button class="ctrl-btn" id="zoom-out" title="Zoom Out" aria-label="Zoom out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>
-        </button>
-        <button class="ctrl-btn" id="reset-view" title="Reset View" aria-label="Reset view">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
-        <button class="ctrl-btn" id="toggle-labels" title="Toggle Labels" aria-label="Toggle labels">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
-        </button>
+      <div class="board-toolbar" id="board-toolbar" hidden>
+        <div class="group-toggle" role="group" aria-label="Group cards by">
+          <span class="group-toggle-label">Group by</span>
+          <button type="button" class="group-toggle-btn active" id="group-by-severity" data-group="severity" aria-pressed="true">Severity</button>
+          <button type="button" class="group-toggle-btn" id="group-by-type" data-group="type" aria-pressed="false">Type</button>
+        </div>
       </div>
 
       <button class="ask-fab" id="ask-fab" hidden>
@@ -208,9 +200,6 @@
     </aside>
 
   </div>
-
-  <!-- ===== Tooltip ===== -->
-  <div class="graph-tooltip"></div>
 
   <!-- ===== Toasts ===== -->
   <div class="toast-container" id="toast-container"></div>
