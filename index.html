@@ -135,6 +135,19 @@
         </div>
       </div>
 
+      <div class="scan-progress" id="scan-progress" hidden aria-live="polite">
+        <div class="scan-progress-inner">
+          <div class="scan-progress-phase" id="scan-progress-phase">Reading the bill…</div>
+          <div class="scan-progress-track">
+            <div class="scan-progress-fill" id="scan-progress-fill"></div>
+          </div>
+          <div class="scan-progress-meta">
+            <span id="scan-progress-pct">0%</span>
+            <span id="scan-progress-time">0:00 elapsed</span>
+          </div>
+        </div>
+      </div>
+
       <div class="board-toolbar" id="board-toolbar" hidden>
         <div class="group-toggle" role="group" aria-label="Group cards by">
           <span class="group-toggle-label">Group by</span>

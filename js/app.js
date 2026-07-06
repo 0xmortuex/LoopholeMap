@@ -99,12 +99,121 @@ function attachRipple(button) {
   });
 }
 
-const SCAN_PHASES = [
-  'Mapping the loopholes',
-  'Cross-referencing clauses',
-  'Scoring severity',
-  'Assembling the graph'
-];
+/*
+ * Scan progress bar. The scan is a single non-streaming request, so exact
+ * byte progress isn't available; instead we advance a determinate bar along a
+ * real elapsed-time curve calibrated to an adaptive per-user estimate (learned
+ * from previous scans), never exceeding ~97% until the response lands, then
+ * snapping to 100%. Shows elapsed time, an estimated time-left, and the phase.
+ */
+const ScanProgress = (() => {
+  const DEFAULT_ESTIMATE_MS = 55000;
+  const EST_KEY = 'loopholemap_scan_estimate_ms';
+  const PHASES = [
+    { at: 0.00, label: 'Reading the bill…' },
+    { at: 0.22, label: 'Cross-referencing the Constitution & Code of Justice…' },
+    { at: 0.55, label: 'Scoring severity, possibility & difficulty…' },
+    { at: 0.82, label: 'Assembling the board…' }
+  ];
+
+  let rafId = null;
+  let startTs = 0;
+  let estimate = DEFAULT_ESTIMATE_MS;
+  let running = false;
+
+  const el = (id) => document.getElementById(id);
+  const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function loadEstimate() {
+    const v = parseInt(localStorage.getItem(EST_KEY), 10);
+    return (Number.isFinite(v) && v >= 12000 && v <= 110000) ? v : DEFAULT_ESTIMATE_MS;
+  }
+  function saveEstimate(actualMs) {
+    const blended = Math.round(loadEstimate() * 0.5 + actualMs * 0.5);
+    localStorage.setItem(EST_KEY, String(Math.min(110000, Math.max(12000, blended))));
+  }
+  function fmtClock(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  function setFraction(frac) {
+    frac = Math.max(0, Math.min(1, frac));
+    const fill = el('scan-progress-fill');
+    if (fill) fill.style.transform = `scaleX(${frac})`;
+    const pct = el('scan-progress-pct');
+    if (pct) pct.textContent = `${Math.round(frac * 100)}%`;
+    const phase = el('scan-progress-phase');
+    if (phase) {
+      let label = PHASES[0].label;
+      for (const p of PHASES) if (frac >= p.at) label = p.label;
+      phase.textContent = label;
+    }
+  }
+
+  function tick() {
+    if (!running) return;
+    const elapsed = Date.now() - startTs;
+    // Asymptotic: ~90% at the estimate, crawling toward 0.97 after.
+    const k = 2.3 / estimate;
+    const frac = Math.min(0.97, 1 - Math.exp(-k * elapsed));
+    setFraction(frac);
+    const timeEl = el('scan-progress-time');
+    if (timeEl) {
+      const remain = estimate - elapsed;
+      const left = remain > 3000 ? `~${Math.round(remain / 1000)}s left` : 'almost done…';
+      timeEl.textContent = `${fmtClock(elapsed)} elapsed · ${left}`;
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    running = true;
+    startTs = Date.now();
+    estimate = loadEstimate();
+    const empty = el('empty-state');
+    if (empty) empty.style.display = 'none';
+    const panel = el('scan-progress');
+    if (panel) panel.hidden = false;
+    setFraction(0.02);
+    const timeEl = el('scan-progress-time');
+    if (timeEl) timeEl.textContent = `0:00 elapsed · ~${Math.round(estimate / 1000)}s left`;
+    cancelAnimationFrame(rafId);
+    // The bar itself is information, not decoration, so it runs even under
+    // reduced motion — just without any extra flourish.
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    running = false;
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  function succeed() {
+    if (startTs) saveEstimate(Date.now() - startTs);
+    const actual = Date.now() - startTs;
+    stop();
+    setFraction(1);
+    const phase = el('scan-progress-phase');
+    if (phase) phase.textContent = 'Complete';
+    const timeEl = el('scan-progress-time');
+    if (timeEl) timeEl.textContent = `Done in ${fmtClock(actual)}`;
+    setTimeout(() => { const panel = el('scan-progress'); if (panel) panel.hidden = true; }, 320);
+  }
+
+  function fail() {
+    stop();
+    const panel = el('scan-progress');
+    if (panel) panel.hidden = true;
+    const gc = el('graph-canvas');
+    const hasBoard = gc && Array.from(gc.children).some(ch => ch.id !== 'empty-state');
+    const empty = el('empty-state');
+    if (empty && !hasBoard) empty.style.display = '';
+  }
+
+  return { start, succeed, fail };
+})();
 
 function scanBtnMarkup(label) {
   return `<span class="scan-spinner"></span><span class="scan-btn-label">${label}</span>`;
@@ -135,23 +244,19 @@ async function startScan(text) {
 
   scanBtn.disabled = true;
   textarea.classList.add('scanning');
-
-  let phaseIndex = 0;
-  scanBtn.innerHTML = scanBtnMarkup(`${SCAN_PHASES[0]}...`);
-  const phaseTimer = setInterval(() => {
-    phaseIndex = (phaseIndex + 1) % SCAN_PHASES.length;
-    scanBtn.innerHTML = scanBtnMarkup(`${SCAN_PHASES[phaseIndex]}...`);
-  }, 2400);
+  scanBtn.innerHTML = scanBtnMarkup('Scanning…');
+  ScanProgress.start();
 
   try {
     const raw = await analyzeRegulation(text);
     analysisData = parseAnalysisResponse(raw);
+    ScanProgress.succeed();
     showGraphView(analysisData);
     showScanResultToast(analysisData);
   } catch (err) {
+    ScanProgress.fail();
     showToast(err.message || 'Analysis failed', 'error');
   } finally {
-    clearInterval(phaseTimer);
     scanBtn.disabled = false;
     scanBtn.innerHTML = SCAN_ICON_MARKUP;
     textarea.classList.remove('scanning');

@@ -29,15 +29,63 @@ const VALID_RELATIONSHIP_TYPES = ['enables', 'weakens', 'contradicts', 'depends-
 
 const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 
+// Robustly recover a JSON object from a model response that may be wrapped in
+// prose or markdown fences, or truncated by the model's max_tokens limit.
+// Returns the parsed object, or undefined if nothing usable could be recovered.
+function extractJsonObject(raw) {
+  if (raw == null) return undefined;
+  let s = String(raw).replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+  const start = s.indexOf('{');
+  if (start === -1) return undefined;
+  s = s.slice(start);
+
+  // Fast path: the response contains a complete object.
+  const lastClose = s.lastIndexOf('}');
+  if (lastClose !== -1) {
+    try { return JSON.parse(s.slice(0, lastClose + 1)); } catch { /* fall through to salvage */ }
+  }
+
+  // Salvage a truncated object: trim to the last complete element and close any
+  // still-open arrays/objects so the recovered portion parses.
+  const salvaged = closeTruncatedJson(lastClose !== -1 ? s.slice(0, lastClose + 1) : s);
+  if (salvaged) {
+    try { return JSON.parse(salvaged); } catch { /* unrecoverable */ }
+  }
+  return undefined;
+}
+
+// Balance unclosed { and [ in a JSON fragment (ignoring brackets inside
+// strings) and drop a dangling trailing comma. Returns null if the fragment
+// ends mid-string (unsafe to close).
+function closeTruncatedJson(fragment) {
+  let s = fragment.replace(/[\s,]+$/, '');
+  const closers = [];
+  let inStr = false, esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') closers.push('}');
+    else if (c === '[') closers.push(']');
+    else if (c === '}' || c === ']') closers.pop();
+  }
+  if (inStr) return null;
+  while (closers.length) s += closers.pop();
+  return s;
+}
+
 function parseAnalysisResponse(raw) {
   let parsed;
 
   if (typeof raw === 'string') {
-    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      throw new Error('Failed to parse AI response as JSON');
+    parsed = extractJsonObject(raw);
+    if (parsed === undefined) {
+      throw new Error('Could not read the AI response — it may have been cut off. Try again, or scan a shorter bill.');
     }
   } else {
     parsed = raw;
@@ -244,11 +292,9 @@ function parseDetailResponse(raw) {
   let parsed;
 
   if (typeof raw === 'string') {
-    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      throw new Error('Failed to parse detail response');
+    parsed = extractJsonObject(raw);
+    if (parsed === undefined) {
+      throw new Error('Could not read the detail response — it may have been cut off. Try again.');
     }
   } else {
     parsed = raw;
@@ -278,10 +324,8 @@ function parseAskResponse(raw) {
   let parsed;
 
   if (typeof raw === 'string') {
-    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
+    parsed = extractJsonObject(raw);
+    if (parsed === undefined) {
       return { answer: raw, followUpSuggestions: [] };
     }
   } else {
