@@ -41,7 +41,10 @@ const SEVERITY_COLORS = {
 
 const SEVERITY_RADIUS = { critical: 23, high: 19, medium: 16, low: 13 };
 
-// { color, dash, width } — dash is an SVG stroke-dasharray token or null for solid.
+// Connections are rendered as uniform, quiet neutral lines (no per-type color,
+// dashes, or arrowheads) — kept intentionally minimal. LINK_STYLES is retained
+// only as reference metadata for the relationship types.
+const LINK_COLOR = '#3d4456';
 const LINK_STYLES = {
   'enables': { color: '#22c55e', dash: null, width: 1.6 },
   'weakens': { color: '#f2b02b', dash: null, width: 1.6 },
@@ -113,23 +116,6 @@ function initGraph(container, data, callbacks = {}) {
     .attr('width', '100%')
     .attr('height', '100%');
 
-  const defs = svg.append('defs');
-  VALID_RELATIONSHIP_TYPES.forEach(type => {
-    const style = LINK_STYLES[type] || { color: '#64748b' };
-    defs.append('marker')
-      .attr('id', `arrow-${type}`)
-      .attr('viewBox', '0 -4 8 8')
-      .attr('refX', 8)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-4L8,0L0,4Z')
-      .attr('fill', style.color)
-      .attr('opacity', 0.8);
-  });
-
   viewport = svg.append('g').attr('class', 'viewport');
   const linksG = viewport.append('g').attr('class', 'links-layer');
   const nodesG = viewport.append('g').attr('class', 'nodes-layer');
@@ -151,12 +137,10 @@ function initGraph(container, data, callbacks = {}) {
     .data(linksData)
     .enter()
     .append('line')
-    .attr('class', d => `link link-${d.type}`)
-    .attr('stroke', d => (LINK_STYLES[d.type] || {}).color || '#64748b')
-    .attr('stroke-width', d => (LINK_STYLES[d.type] || {}).width || 1.5)
-    .attr('stroke-dasharray', d => (LINK_STYLES[d.type] || {}).dash || null)
-    .attr('marker-end', d => `url(#arrow-${d.type})`)
-    .attr('opacity', 0.5)
+    .attr('class', 'link')
+    .attr('stroke', LINK_COLOR)
+    .attr('stroke-width', 1)
+    .attr('opacity', 0.4)
     .on('mouseenter', (event, d) => showLinkTooltip(event, d))
     .on('mousemove', positionTooltip)
     .on('mouseleave', hideTooltip);
@@ -281,7 +265,7 @@ function animateIn() {
     for (let i = 0; i < 300; i++) simulation.tick();
     ticked();
     nodeSel.style('opacity', 1);
-    linkSel.attr('opacity', 0.5);
+    linkSel.attr('opacity', 0.4);
     linksDrawnIn = true;
     zoomToFit(0);
     return;
@@ -302,17 +286,16 @@ function drawLinksIn() {
   linkSel.each(function(d) {
     const el = this;
     const length = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y) || 1;
-    const style = LINK_STYLES[d.type] || {};
     d3.select(el)
       .attr('stroke-dasharray', `${length} ${length}`)
       .attr('stroke-dashoffset', length)
-      .attr('opacity', 0.5)
+      .attr('opacity', 0.4)
       .transition()
       .duration(500)
       .ease(d3.easeCubicInOut)
       .attr('stroke-dashoffset', 0)
       .on('end', function() {
-        d3.select(this).attr('stroke-dasharray', style.dash || null);
+        d3.select(this).attr('stroke-dasharray', null);
       });
   });
 }

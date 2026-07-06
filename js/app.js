@@ -315,18 +315,9 @@ function renderLegend() {
     return `<div class="legend-item"><span class="legend-dot" style="background: ${TYPE_COLORS[t]}"></span>${escapeHtml(label)}</div>`;
   }).join('');
 
-  const linkItems = VALID_RELATIONSHIP_TYPES.map(t => {
-    const label = t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const style = LINK_STYLES[t] || {};
-    const dashClass = style.dash === '2,4' ? 'dashed' : style.dash === '1,3' ? 'dotted' : '';
-    return `<div class="legend-item"><span class="legend-line ${dashClass}" style="border-color: ${style.color}"></span>${escapeHtml(label)}</div>`;
-  }).join('');
-
   container.innerHTML = `
     <div class="legend-section-title">Severity &amp; Type</div>
     <div class="legend-items">${typeItems}</div>
-    <div class="legend-section-title">Connections</div>
-    <div class="legend-items">${linkItems}</div>
   `;
 }
 
