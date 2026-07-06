@@ -25,6 +25,26 @@ const DIFFICULTY_LABELS = {
   'very-hard': 'Very hard'
 };
 
+const VALID_EFFECTIVENESS = ['very-low', 'low', 'medium', 'high', 'very-high'];
+
+const EFFECTIVENESS_LABELS = {
+  'very-low': 'Very low',
+  'low': 'Low',
+  'medium': 'Medium',
+  'high': 'High',
+  'very-high': 'Very high'
+};
+
+const VALID_IMPORTANCE = ['very-low', 'low', 'medium', 'high', 'very-high'];
+
+const IMPORTANCE_LABELS = {
+  'very-low': 'Very low',
+  'low': 'Low',
+  'medium': 'Medium',
+  'high': 'High',
+  'very-high': 'Very high'
+};
+
 const VALID_RELATIONSHIP_TYPES = ['enables', 'weakens', 'contradicts', 'depends-on', 'amplifies'];
 
 const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
@@ -144,13 +164,20 @@ function validateNode(node, index) {
     node.possibility ?? node.possibilityOfHappening ?? node.likelihood ?? node.probability ?? node.chance
   );
   const difficulty = normalizeDifficulty(node.difficulty ?? node.exploitDifficulty ?? node.exploitationDifficulty);
+  const effectiveness = normalizeEffectiveness(
+    node.effectiveness ?? node.effect ?? node.impact ?? node.exploitEffectiveness
+  );
+  const importance = normalizeImportance(
+    node.importance ?? node.significance ?? node.priority ?? node.materiality
+  );
   const connectedNodes = Array.isArray(node.connectedNodes)
     ? node.connectedNodes.filter(x => typeof x === 'string')
     : [];
 
   return {
     id, title, type, severity, section, description, exploitation,
-    realWorldParallel, suggestedFix, possibility, difficulty, connectedNodes
+    realWorldParallel, suggestedFix, possibility, difficulty,
+    effectiveness, importance, connectedNodes
   };
 }
 
@@ -253,6 +280,61 @@ function normalizeDifficulty(value) {
   return aliases[normalized] || 'moderate';
 }
 
+function normalizeEffectiveness(value) {
+  const normalized = normalizeRating(value);
+  const aliases = {
+    'verylow': 'very-low',
+    'very-low': 'very-low',
+    'very low': 'very-low',
+    'ineffective': 'very-low',
+    'negligible': 'very-low',
+    'minimal': 'very-low',
+    'low': 'low',
+    'limited': 'low',
+    'weak': 'low',
+    'partial': 'medium',
+    'medium': 'medium',
+    'moderate': 'medium',
+    'effective': 'high',
+    'high': 'high',
+    'strong': 'high',
+    'veryhigh': 'very-high',
+    'very-high': 'very-high',
+    'very high': 'very-high',
+    'highly effective': 'very-high',
+    'decisive': 'very-high',
+    'total': 'very-high'
+  };
+  return aliases[normalized] || 'medium';
+}
+
+function normalizeImportance(value) {
+  const normalized = normalizeRating(value);
+  const aliases = {
+    'verylow': 'very-low',
+    'very-low': 'very-low',
+    'very low': 'very-low',
+    'trivial': 'very-low',
+    'negligible': 'very-low',
+    'low': 'low',
+    'minor': 'low',
+    'medium': 'medium',
+    'moderate': 'medium',
+    'notable': 'medium',
+    'high': 'high',
+    'important': 'high',
+    'major': 'high',
+    'significant': 'high',
+    'veryhigh': 'very-high',
+    'very-high': 'very-high',
+    'very high': 'very-high',
+    'critical': 'very-high',
+    'essential': 'very-high',
+    'vital': 'very-high'
+  };
+  return aliases[normalized] || 'medium';
+}
+
 function normalizeRating(value) {
   return String(value || '')
     .toLowerCase()
@@ -343,5 +425,6 @@ function parseAskResponse(raw) {
 export {
   parseAnalysisResponse, parseDetailResponse, parseAskResponse,
   VALID_TYPES, VALID_RELATIONSHIP_TYPES, VALID_POSSIBILITIES, VALID_DIFFICULTIES,
-  POSSIBILITY_LABELS, DIFFICULTY_LABELS
+  VALID_EFFECTIVENESS, VALID_IMPORTANCE,
+  POSSIBILITY_LABELS, DIFFICULTY_LABELS, EFFECTIVENESS_LABELS, IMPORTANCE_LABELS
 };

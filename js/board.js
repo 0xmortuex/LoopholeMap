@@ -1,4 +1,4 @@
-import { VALID_TYPES, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
+import { VALID_TYPES, POSSIBILITY_LABELS, DIFFICULTY_LABELS, EFFECTIVENESS_LABELS, IMPORTANCE_LABELS } from './parser.js';
 import { prefersReducedMotion } from './motion.js';
 
 /* ===== Shared visual vocabulary (also used by app.js / panel.js for
@@ -54,6 +54,23 @@ const DIFFICULTY_COLORS = {
   'moderate': '#f2b02b',
   'hard': '#f97316',
   'very-hard': '#ef4444'
+};
+
+// Effectiveness & importance both run very-low → very-high (more = hotter).
+const EFFECTIVENESS_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
+};
+
+const IMPORTANCE_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
 };
 
 /* ===== Module state ===== */
@@ -284,7 +301,9 @@ function buildCard(node) {
   metrics.className = 'card-metrics';
   metrics.append(
     buildMetric('Possibility', POSSIBILITY_LABELS[node.possibility] || 'Medium', POSSIBILITY_COLORS[node.possibility] || POSSIBILITY_COLORS.medium),
-    buildMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate)
+    buildMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate),
+    buildMetric('Effectiveness', EFFECTIVENESS_LABELS[node.effectiveness] || 'Medium', EFFECTIVENESS_COLORS[node.effectiveness] || EFFECTIVENESS_COLORS.medium),
+    buildMetric('Importance', IMPORTANCE_LABELS[node.importance] || 'Medium', IMPORTANCE_COLORS[node.importance] || IMPORTANCE_COLORS.medium)
   );
   body.appendChild(metrics);
 

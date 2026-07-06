@@ -1,5 +1,5 @@
 import { getNodeDetail, askAI } from './api.js';
-import { parseDetailResponse, parseAskResponse, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
+import { parseDetailResponse, parseAskResponse, POSSIBILITY_LABELS, DIFFICULTY_LABELS, EFFECTIVENESS_LABELS, IMPORTANCE_LABELS } from './parser.js';
 import { TYPE_COLORS } from './board.js';
 
 const deepDiveCache = new Map();
@@ -15,6 +15,20 @@ const DIFFICULTY_COLORS = {
   'moderate': '#f2b02b',
   'hard': '#f97316',
   'very-hard': '#ef4444'
+};
+const EFFECTIVENESS_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
+};
+const IMPORTANCE_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
 };
 
 let allNodes = [];
@@ -123,7 +137,9 @@ function renderDetail(node) {
   const metrics = el('div', 'detail-metrics');
   metrics.append(
     buildDetailMetric('Possibility of Happening', POSSIBILITY_LABELS[node.possibility] || 'Medium', POSSIBILITY_COLORS[node.possibility] || POSSIBILITY_COLORS.medium),
-    buildDetailMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate)
+    buildDetailMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate),
+    buildDetailMetric('Effectiveness', EFFECTIVENESS_LABELS[node.effectiveness] || 'Medium', EFFECTIVENESS_COLORS[node.effectiveness] || EFFECTIVENESS_COLORS.medium),
+    buildDetailMetric('Importance', IMPORTANCE_LABELS[node.importance] || 'Medium', IMPORTANCE_COLORS[node.importance] || IMPORTANCE_COLORS.medium)
   );
   view.appendChild(metrics);
 
@@ -334,6 +350,8 @@ function buildContext() {
         `Node: ${currentNode.title} (${currentNode.type}, ${currentNode.severity})`,
         `Possibility: ${POSSIBILITY_LABELS[currentNode.possibility] || 'Medium'}`,
         `Difficulty: ${DIFFICULTY_LABELS[currentNode.difficulty] || 'Moderate'}`,
+        `Effectiveness: ${EFFECTIVENESS_LABELS[currentNode.effectiveness] || 'Medium'}`,
+        `Importance: ${IMPORTANCE_LABELS[currentNode.importance] || 'Medium'}`,
         `Section: ${currentNode.section || ''}`,
         `Description: ${currentNode.description || ''}`
       ].join('\n')

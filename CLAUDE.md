@@ -49,6 +49,8 @@ When the AI analyzes a bill with RP legal context available, nodes should includ
 - The relevant Constitution, Code of Justice, or legislation compendium section.
 - `possibility`: how likely the issue is to happen in RP practice, using `very-low`, `low`, `medium`, `high`, or `very-high`.
 - `difficulty`: how hard it would be to exploit or trigger, using `easy`, `moderate`, `hard`, or `very-hard`.
+- `effectiveness`: how effective the loophole would be at achieving the exploit / defeating the bill's intent if used, using `very-low`, `low`, `medium`, `high`, or `very-high`.
+- `importance`: how important the issue is for the legislature to address, using `very-low`, `low`, `medium`, `high`, or `very-high`.
 - Why the conflict, gap, or amendment requirement matters.
 - How the language could be exploited in RP gameplay.
 - A suggested fix that keeps the bill legally compatible where possible.
