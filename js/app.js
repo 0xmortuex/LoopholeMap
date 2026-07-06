@@ -1,10 +1,11 @@
 import { analyzeRegulation, MAX_INPUT_CHARS, WARN_INPUT_CHARS } from './api.js';
-import { parseAnalysisResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES } from './parser.js';
+import { parseAnalysisResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
 import {
   initBoard, destroyBoard, centerOnNode, setFilters, clearFocus,
   TYPE_COLORS, TYPE_GLYPHS, SEVERITY_COLORS
 } from './board.js';
 import { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel } from './panel.js';
+import { RP_LEGAL_REFERENCES_ENABLED } from './rpLaw.js';
 import { SAMPLE_REGULATION } from './samples.js';
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -19,6 +20,10 @@ function $(id) { return document.getElementById(id); }
 
 function isCusaActive() {
   return !!localStorage.getItem('loopholemap_cusa_key');
+}
+
+function isRpLegalMode() {
+  return RP_LEGAL_REFERENCES_ENABLED || isCusaActive();
 }
 
 function init() {
@@ -173,7 +178,8 @@ function showGraphView(data) {
   nodeCount.textContent = `${data.nodes.length} nodes`;
   nodeCount.hidden = false;
 
-  $('empty-state').style.display = 'none';
+  const emptyState = $('empty-state');
+  if (emptyState) emptyState.style.display = 'none';
 
   activeSeverityFilters = new Set();
   activeTypeFilters = new Set();
@@ -203,7 +209,11 @@ function showGraphView(data) {
 }
 
 function buildOverallContextText(data) {
-  const nodeSummary = data.nodes.map(n => `- [${n.type}] ${n.title} (${n.severity})`).join('\n');
+  const nodeSummary = data.nodes.map(n => {
+    const possibility = POSSIBILITY_LABELS[n.possibility] || 'Medium';
+    const difficulty = DIFFICULTY_LABELS[n.difficulty] || 'Moderate';
+    return `- [${n.type}] ${n.title} (${n.severity}; possibility: ${possibility}; difficulty: ${difficulty})`;
+  }).join('\n');
   return `Regulation: ${data.title}\nOverall Assessment: ${data.summary}\nNodes found:\n${nodeSummary}`;
 }
 
@@ -237,7 +247,7 @@ function renderGauge(riskLevel) {
 /* ===== Filters ===== */
 
 function renderFilters(nodes) {
-  const cusa = isCusaActive();
+  const cusa = isRpLegalMode();
   const severityWrap = $('severity-filters');
   const typeWrap = $('type-filters');
 
@@ -305,7 +315,7 @@ function updateClearFiltersVisibility() {
 
 function renderLegend() {
   const container = $('legend-content');
-  const cusa = isCusaActive();
+  const cusa = isRpLegalMode();
   const shownTypes = cusa ? VALID_TYPES : VALID_TYPES.filter(t => !CUSA_TYPES.has(t));
 
   const typeItems = shownTypes.map(t => {

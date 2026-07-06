@@ -6,6 +6,25 @@ const VALID_TYPES = [
 
 const VALID_SEVERITIES = ['critical', 'high', 'medium', 'low'];
 
+const VALID_POSSIBILITIES = ['very-low', 'low', 'medium', 'high', 'very-high'];
+
+const POSSIBILITY_LABELS = {
+  'very-low': 'Very low',
+  'low': 'Low',
+  'medium': 'Medium',
+  'high': 'High',
+  'very-high': 'Very high'
+};
+
+const VALID_DIFFICULTIES = ['easy', 'moderate', 'hard', 'very-hard'];
+
+const DIFFICULTY_LABELS = {
+  'easy': 'Easy',
+  'moderate': 'Moderate',
+  'hard': 'Hard',
+  'very-hard': 'Very hard'
+};
+
 const VALID_RELATIONSHIP_TYPES = ['enables', 'weakens', 'contradicts', 'depends-on', 'amplifies'];
 
 const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
@@ -67,11 +86,70 @@ function validateNode(node, index) {
   const exploitation = typeof node.exploitation === 'string' ? node.exploitation : '';
   const realWorldParallel = typeof node.realWorldParallel === 'string' ? node.realWorldParallel : '';
   const suggestedFix = typeof node.suggestedFix === 'string' ? node.suggestedFix : '';
+  const possibility = normalizePossibility(
+    node.possibility ?? node.possibilityOfHappening ?? node.likelihood ?? node.probability ?? node.chance
+  );
+  const difficulty = normalizeDifficulty(node.difficulty ?? node.exploitDifficulty ?? node.exploitationDifficulty);
   const connectedNodes = Array.isArray(node.connectedNodes)
     ? node.connectedNodes.filter(x => typeof x === 'string')
     : [];
 
-  return { id, title, type, severity, section, description, exploitation, realWorldParallel, suggestedFix, connectedNodes };
+  return {
+    id, title, type, severity, section, description, exploitation,
+    realWorldParallel, suggestedFix, possibility, difficulty, connectedNodes
+  };
+}
+
+function normalizePossibility(value) {
+  const normalized = normalizeRating(value);
+  const aliases = {
+    'verylow': 'very-low',
+    'very-low': 'very-low',
+    'very low': 'very-low',
+    'very unlikely': 'very-low',
+    'rare': 'very-low',
+    'unlikely': 'low',
+    'low': 'low',
+    'possible': 'medium',
+    'medium': 'medium',
+    'moderate': 'medium',
+    'likely': 'high',
+    'high': 'high',
+    'veryhigh': 'very-high',
+    'very-high': 'very-high',
+    'very high': 'very-high',
+    'very likely': 'very-high',
+    'almost certain': 'very-high'
+  };
+  return aliases[normalized] || 'medium';
+}
+
+function normalizeDifficulty(value) {
+  const normalized = normalizeRating(value);
+  const aliases = {
+    'easy': 'easy',
+    'low': 'easy',
+    'simple': 'easy',
+    'moderate': 'moderate',
+    'medium': 'moderate',
+    'hard': 'hard',
+    'high': 'hard',
+    'difficult': 'hard',
+    'veryhard': 'very-hard',
+    'very-hard': 'very-hard',
+    'very hard': 'very-hard',
+    'very difficult': 'very-hard',
+    'extreme': 'very-hard'
+  };
+  return aliases[normalized] || 'moderate';
+}
+
+function normalizeRating(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[_/]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function buildConnectionsFromConnectedNodes(nodes, nodeIds) {
@@ -130,7 +208,7 @@ function parseDetailResponse(raw) {
         }))
       : [],
     exploitScenario: Array.isArray(parsed.exploitScenario) ? parsed.exploitScenario : [],
-    exploitDifficulty: ['easy', 'moderate', 'hard'].includes(parsed.exploitDifficulty)
+    exploitDifficulty: VALID_DIFFICULTIES.includes(parsed.exploitDifficulty)
       ? parsed.exploitDifficulty : 'moderate'
   };
 }
@@ -157,4 +235,8 @@ function parseAskResponse(raw) {
   };
 }
 
-export { parseAnalysisResponse, parseDetailResponse, parseAskResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES };
+export {
+  parseAnalysisResponse, parseDetailResponse, parseAskResponse,
+  VALID_TYPES, VALID_RELATIONSHIP_TYPES, VALID_POSSIBILITIES, VALID_DIFFICULTIES,
+  POSSIBILITY_LABELS, DIFFICULTY_LABELS
+};

@@ -297,6 +297,40 @@
   color: var(--text-faint);
 }
 
+.card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 3px;
+}
+.card-metric {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--metric-color, var(--border)) 42%, var(--border-soft));
+  background: color-mix(in srgb, var(--metric-color, #64748b) 10%, var(--bg-3));
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+.card-metric-label,
+.card-metric-value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+}
+.card-metric-value {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--metric-color, var(--text-dim));
+}
+
 .card-desc {
   margin: 2px 0 0;
   font-size: 12px;

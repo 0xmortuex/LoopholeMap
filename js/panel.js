@@ -1,8 +1,22 @@
 import { getNodeDetail, askAI } from './api.js';
-import { parseDetailResponse, parseAskResponse } from './parser.js';
+import { parseDetailResponse, parseAskResponse, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
 import { TYPE_COLORS } from './board.js';
 
 const deepDiveCache = new Map();
+const POSSIBILITY_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
+};
+const DIFFICULTY_COLORS = {
+  'easy': '#22c55e',
+  'moderate': '#f2b02b',
+  'hard': '#f97316',
+  'very-hard': '#ef4444'
+};
+
 let allNodes = [];
 let allConnections = [];
 let currentNode = null;
@@ -106,6 +120,13 @@ function renderDetail(node) {
     view.appendChild(ref);
   }
 
+  const metrics = el('div', 'detail-metrics');
+  metrics.append(
+    buildDetailMetric('Possibility of Happening', POSSIBILITY_LABELS[node.possibility] || 'Medium', POSSIBILITY_COLORS[node.possibility] || POSSIBILITY_COLORS.medium),
+    buildDetailMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate)
+  );
+  view.appendChild(metrics);
+
   const blocks = [
     ['What’s the Issue', node.description, typeColor, false],
     ['How It Can Be Exploited', node.exploitation, '#f97316', false],
@@ -152,6 +173,20 @@ function renderDetail(node) {
   const deepDiveContainer = el('div', '');
   deepDiveContainer.id = 'deep-dive-container';
   view.appendChild(deepDiveContainer);
+}
+
+function buildDetailMetric(label, value, color) {
+  const metric = el('div', 'detail-metric');
+  metric.style.setProperty('--metric-color', color);
+
+  const metricLabel = el('div', 'detail-metric-label');
+  metricLabel.textContent = label;
+
+  const metricValue = el('div', 'detail-metric-value');
+  metricValue.textContent = value;
+
+  metric.append(metricLabel, metricValue);
+  return metric;
 }
 
 function el(tag, className) {
@@ -295,7 +330,13 @@ function buildContext() {
   if (currentNode) {
     return {
       contextType: 'node',
-      contextData: `Node: ${currentNode.title} (${currentNode.type}, ${currentNode.severity})\nSection: ${currentNode.section || ''}\nDescription: ${currentNode.description || ''}`
+      contextData: [
+        `Node: ${currentNode.title} (${currentNode.type}, ${currentNode.severity})`,
+        `Possibility: ${POSSIBILITY_LABELS[currentNode.possibility] || 'Medium'}`,
+        `Difficulty: ${DIFFICULTY_LABELS[currentNode.difficulty] || 'Moderate'}`,
+        `Section: ${currentNode.section || ''}`,
+        `Description: ${currentNode.description || ''}`
+      ].join('\n')
     };
   }
   return { contextType: 'general', contextData: overallContext || 'general' };

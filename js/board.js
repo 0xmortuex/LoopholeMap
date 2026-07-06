@@ -1,4 +1,4 @@
-import { VALID_TYPES } from './parser.js';
+import { VALID_TYPES, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
 import { prefersReducedMotion } from './motion.js';
 
 /* ===== Shared visual vocabulary (also used by app.js / panel.js for
@@ -40,6 +40,21 @@ const SEVERITY_COLORS = {
 };
 
 const SEVERITY_ORDER_LIST = ['critical', 'high', 'medium', 'low'];
+
+const POSSIBILITY_COLORS = {
+  'very-low': '#3b82f6',
+  'low': '#14b8a6',
+  'medium': '#f2b02b',
+  'high': '#f97316',
+  'very-high': '#ef4444'
+};
+
+const DIFFICULTY_COLORS = {
+  'easy': '#22c55e',
+  'moderate': '#f2b02b',
+  'hard': '#f97316',
+  'very-hard': '#ef4444'
+};
 
 /* ===== Module state ===== */
 
@@ -265,6 +280,14 @@ function buildCard(node) {
     body.appendChild(section);
   }
 
+  const metrics = document.createElement('div');
+  metrics.className = 'card-metrics';
+  metrics.append(
+    buildMetric('Possibility', POSSIBILITY_LABELS[node.possibility] || 'Medium', POSSIBILITY_COLORS[node.possibility] || POSSIBILITY_COLORS.medium),
+    buildMetric('Difficulty', DIFFICULTY_LABELS[node.difficulty] || 'Moderate', DIFFICULTY_COLORS[node.difficulty] || DIFFICULTY_COLORS.moderate)
+  );
+  body.appendChild(metrics);
+
   if (node.description) {
     const desc = document.createElement('p');
     desc.className = 'card-desc';
@@ -283,6 +306,23 @@ function buildCard(node) {
   });
 
   return card;
+}
+
+function buildMetric(label, value, color) {
+  const metric = document.createElement('div');
+  metric.className = 'card-metric';
+  metric.style.setProperty('--metric-color', color);
+
+  const metricLabel = document.createElement('span');
+  metricLabel.className = 'card-metric-label';
+  metricLabel.textContent = label;
+
+  const metricValue = document.createElement('span');
+  metricValue.className = 'card-metric-value';
+  metricValue.textContent = value;
+
+  metric.append(metricLabel, metricValue);
+  return metric;
 }
 
 function selectCard(node) {

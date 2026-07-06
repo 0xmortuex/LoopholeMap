@@ -1,10 +1,12 @@
+import { buildRpLegalAnalysisText, buildRpLegalReferenceContext } from './rpLaw.js';
+
 const PROXY_URL = 'https://loopholemap-proxy.mortuexhavoc.workers.dev';
 
-// The worker caps its analysis response at max_tokens: 8000. Very large
-// pasted regulations push the output past that budget and the request
-// either fails or returns truncated JSON. This cap keeps input text in a
-// range the worker can reliably answer in full.
-const MAX_INPUT_CHARS = 24000;
+// The worker caps its analysis response at max_tokens: 8000. Keep the final
+// request compact enough to include RP legal excerpts and still return full
+// JSON.
+const MAX_REQUEST_CHARS = 24000;
+const MAX_INPUT_CHARS = 16000;
 const WARN_INPUT_CHARS = Math.round(MAX_INPUT_CHARS * 0.85);
 
 // Analyses can be slow (large regulation + AI reasoning). Give it real
@@ -64,26 +66,67 @@ async function postToProxy(body) {
 async function analyzeRegulation(text) {
   checkInputLength(text);
   const cusaKey = getCusaKey();
-  return postToProxy({ action: 'analyze', text, cusaKey });
+  const rpLegalRequest = await buildRpLegalAnalysisText(text, {
+    maxTotalChars: MAX_REQUEST_CHARS
+  });
+
+  return postToProxy({
+    action: 'analyze',
+    text: rpLegalRequest.text,
+    cusaKey,
+    rpLegalContext: rpLegalRequest.metadata
+  });
 }
 
 async function getNodeDetail(nodeData) {
   const cusaKey = getCusaKey();
+  const referenceContext = await buildRpLegalReferenceContext(
+    `${nodeData.title}\n${nodeData.section || ''}\n${nodeData.type}\n${nodeData.description || ''}`,
+    { maxChars: 7000 }
+  );
+
   return postToProxy({
     action: 'detail',
     nodeData: {
       title: nodeData.title,
       section: nodeData.section,
       type: nodeData.type,
-      description: nodeData.description
+      severity: nodeData.severity,
+      possibility: nodeData.possibility,
+      difficulty: nodeData.difficulty,
+      description: [
+        nodeData.description,
+        '',
+        'RP legal reference excerpts for this issue:',
+        referenceContext.text
+      ].join('\n')
     },
-    cusaKey
+    cusaKey,
+    rpLegalContext: referenceContext.metadata
   });
 }
 
 async function askAI(contextType, contextData, question) {
   const cusaKey = getCusaKey();
-  return postToProxy({ action: 'ask', contextType, contextData, question, cusaKey });
+  const referenceContext = await buildRpLegalReferenceContext(
+    `${contextData}\n${question}`,
+    { maxChars: 7000 }
+  );
+  const enrichedContextData = [
+    contextData,
+    '',
+    'RP legal reference excerpts for this question:',
+    referenceContext.text
+  ].join('\n');
+
+  return postToProxy({
+    action: 'ask',
+    contextType,
+    contextData: enrichedContextData,
+    question,
+    cusaKey,
+    rpLegalContext: referenceContext.metadata
+  });
 }
 
 export { analyzeRegulation, getNodeDetail, askAI, MAX_INPUT_CHARS, WARN_INPUT_CHARS };

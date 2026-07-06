@@ -27,8 +27,25 @@ Or clone and run locally:
 ```bash
 git clone https://github.com/0xmortuex/LoopholeMap.git
 cd LoopholeMap
-# Open index.html in a browser — no build step needed
+npx serve -l 3000 -s .
 ```
+
+Then open `http://localhost:3000`. Serving locally lets the browser load the bundled RP legal reference files during scans.
+
+## RP Legal Reference
+
+This project can be used for RP Congress bill review. Project memory for future AI-assisted development lives in [`CLAUDE.md`](CLAUDE.md), and the RP legal source references are:
+
+- [`docs/rp-law/constitution.md`](docs/rp-law/constitution.md)
+- [`docs/rp-law/code-of-justice.md`](docs/rp-law/code-of-justice.md)
+- [`docs/rp-law/all-legislation.md`](docs/rp-law/all-legislation.md)
+- [`docs/rp-law/legislation-corpus.md`](docs/rp-law/legislation-corpus.md)
+- [`docs/rp-law/legislation-compendium.md`](docs/rp-law/legislation-compendium.md)
+- [`docs/rp-law/legislation/`](docs/rp-law/legislation/)
+
+The app uses `all-legislation.md` as the single legislation source during scans. It contains the compendium summary plus the extracted full text from imported linked legislation docs.
+
+When scanning a bill, the frontend loads these references, selects relevant excerpts, and sends them with the pasted bill to the analysis proxy.
 
 ## Tech Stack
 

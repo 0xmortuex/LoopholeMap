@@ -1,0 +1,446 @@
+{
+  "source": "https://docs.google.com/document/d/1eD_7NWzHrU5JB1NAnZwZMHhUTM2ab2tEU5XM4iqfWAk/mobilebasic",
+  "importedAt": "2026-07-06T11:45:42.539Z",
+  "total": 49,
+  "imported": 45,
+  "failed": 4,
+  "documents": [
+    {
+      "href": "https://docs.google.com/document/d/10s3rYgAX4BH049SQFjYL4hvmHv2_CqDOn04Fy-5VOMo/edit?usp=sharing",
+      "label": "S. 008 \"Revised Congressional Standardization Act\"",
+      "id": "10s3rYgAX4BH049SQFjYL4hvmHv2_CqDOn04Fy-5VOMo",
+      "mobileUrl": "https://docs.google.com/document/d/10s3rYgAX4BH049SQFjYL4hvmHv2_CqDOn04Fy-5VOMo/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/s-008-revised-congressional-standardization-act.md",
+      "chars": 2459
+    },
+    {
+      "href": "https://docs.google.com/document/d/1eErWCX1GDE-mYuQtsZs3K3wkxqESfrk6VAyKVNDAqI0/edit?usp=sharing",
+      "label": "H.R. 0354 \"War & Peace Powers Act\" Revised",
+      "id": "1eErWCX1GDE-mYuQtsZs3K3wkxqESfrk6VAyKVNDAqI0",
+      "mobileUrl": "https://docs.google.com/document/d/1eErWCX1GDE-mYuQtsZs3K3wkxqESfrk6VAyKVNDAqI0/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0354-war-peace-powers-act-revised.md",
+      "chars": 4218
+    },
+    {
+      "href": "https://docs.google.com/document/d/1Pm3anGPQlxFBic3cn85pOWTV1RrbodN9gKbU5cNrxK8/edit?usp=sharing",
+      "label": "H.R. 0619 \"Personnel Firearms Safety & Accountability Act\" Revised",
+      "id": "1Pm3anGPQlxFBic3cn85pOWTV1RrbodN9gKbU5cNrxK8",
+      "mobileUrl": "https://docs.google.com/document/d/1Pm3anGPQlxFBic3cn85pOWTV1RrbodN9gKbU5cNrxK8/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0619-personnel-firearms-safety-accountability-act-revised.md",
+      "chars": 2543
+    },
+    {
+      "href": "https://docs.google.com/document/d/1iCr0fS-qqNpjq2fyGVBgUjzQ1JJAHeHMnHS5NZ_Nl78/edit?usp=sharing",
+      "label": "H.R. 1105 \"Cabinet Attire Act\"",
+      "id": "1iCr0fS-qqNpjq2fyGVBgUjzQ1JJAHeHMnHS5NZ_Nl78",
+      "mobileUrl": "https://docs.google.com/document/d/1iCr0fS-qqNpjq2fyGVBgUjzQ1JJAHeHMnHS5NZ_Nl78/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1105-cabinet-attire-act.md",
+      "chars": 2672
+    },
+    {
+      "href": "https://docs.google.com/document/d/175U4EL6cuwzKx3izIOkZOL6hFK8ihmy0YKFAPq2ZMfU/edit?usp=sharing",
+      "label": "H.R. 1153 \"Slander & Defamation Protection Act\" Revised",
+      "id": "175U4EL6cuwzKx3izIOkZOL6hFK8ihmy0YKFAPq2ZMfU",
+      "mobileUrl": "https://docs.google.com/document/d/175U4EL6cuwzKx3izIOkZOL6hFK8ihmy0YKFAPq2ZMfU/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1153-slander-defamation-protection-act-revised.md",
+      "chars": 2325
+    },
+    {
+      "href": "https://docs.google.com/document/d/11qrKIG_fsne38Jw6GBOPmmLY4vL4vJj-vqVYfJjAIXk/edit?usp=sharing",
+      "label": "H.R. 0117 Independence Act",
+      "id": "11qrKIG_fsne38Jw6GBOPmmLY4vL4vJj-vqVYfJjAIXk",
+      "mobileUrl": "https://docs.google.com/document/d/11qrKIG_fsne38Jw6GBOPmmLY4vL4vJj-vqVYfJjAIXk/mobilebasic",
+      "status": "failed",
+      "error": "HTTP 410"
+    },
+    {
+      "href": "https://docs.google.com/document/d/1MS8rjFmMHEHcQeMlKdqlKx-Z7lME-RarCk7ZYl8Zk8s/edit",
+      "label": "H.R. 0090 Self Defense Act",
+      "id": "1MS8rjFmMHEHcQeMlKdqlKx-Z7lME-RarCk7ZYl8Zk8s",
+      "mobileUrl": "https://docs.google.com/document/d/1MS8rjFmMHEHcQeMlKdqlKx-Z7lME-RarCk7ZYl8Zk8s/mobilebasic",
+      "status": "failed",
+      "error": "HTTP 410"
+    },
+    {
+      "href": "https://docs.google.com/document/d/1dqGfEvV4wCPtsf2OFnbo8Z_pnbmJRBl9_YpkOjiwD-g/edit?tab=t.0",
+      "label": "Divisional Treason Act",
+      "id": "1dqGfEvV4wCPtsf2OFnbo8Z_pnbmJRBl9_YpkOjiwD-g",
+      "mobileUrl": "https://docs.google.com/document/d/1dqGfEvV4wCPtsf2OFnbo8Z_pnbmJRBl9_YpkOjiwD-g/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/divisional-treason-act.md",
+      "chars": 2062
+    },
+    {
+      "href": "https://docs.google.com/document/d/1A19xmET-sniqdkTd1mEX79qy7NdcV7bZTPuKxzKVqa8/edit?usp=sharing",
+      "label": "H. R. 3428 - Divisional Blacklist Transparency Act",
+      "id": "1A19xmET-sniqdkTd1mEX79qy7NdcV7bZTPuKxzKVqa8",
+      "mobileUrl": "https://docs.google.com/document/d/1A19xmET-sniqdkTd1mEX79qy7NdcV7bZTPuKxzKVqa8/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3428-divisional-blacklist-transparency-act.md",
+      "chars": 3002
+    },
+    {
+      "href": "https://docs.google.com/document/d/1lkFJVY1FBFs7DOXa8B6t-v1TuTWsM-8th_FmxQcFXsA/edit?usp=sharing",
+      "label": "H.R. 3421 - Standards of Professionalism in Public Service",
+      "id": "1lkFJVY1FBFs7DOXa8B6t-v1TuTWsM-8th_FmxQcFXsA",
+      "mobileUrl": "https://docs.google.com/document/d/1lkFJVY1FBFs7DOXa8B6t-v1TuTWsM-8th_FmxQcFXsA/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3421-standards-of-professionalism-in-public-service.md",
+      "chars": 7199
+    },
+    {
+      "href": "https://docs.google.com/document/d/1CbbIx9IlfpRqhnJUgt2aM50GEowsIJeg9D3ptjifXws/edit?usp=sharing",
+      "label": "H. J. RES 3403 - Joint Congressional Library",
+      "id": "1CbbIx9IlfpRqhnJUgt2aM50GEowsIJeg9D3ptjifXws",
+      "mobileUrl": "https://docs.google.com/document/d/1CbbIx9IlfpRqhnJUgt2aM50GEowsIJeg9D3ptjifXws/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-j-res-3403-joint-congressional-library.md",
+      "chars": 3156
+    },
+    {
+      "href": "https://docs.google.com/document/d/1yGx234R3SSSqYO1MSRRN6bfAXIqraGI1YDLHnVtmMmU/edit?usp=sharing",
+      "label": "H. R. 3440 - Fair Election Integrity Act",
+      "id": "1yGx234R3SSSqYO1MSRRN6bfAXIqraGI1YDLHnVtmMmU",
+      "mobileUrl": "https://docs.google.com/document/d/1yGx234R3SSSqYO1MSRRN6bfAXIqraGI1YDLHnVtmMmU/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3440-fair-election-integrity-act.md",
+      "chars": 4849
+    },
+    {
+      "href": "https://docs.google.com/document/d/1JXP9HHWTvQuyq1oTxjjl56kZ5zsPnRQQbi7QcFQRmn0/edit?tab=t.raxdcplytxol",
+      "label": "H. J. RES 3401 - Joint Resolution to enact a Legislative Reform",
+      "id": "1JXP9HHWTvQuyq1oTxjjl56kZ5zsPnRQQbi7QcFQRmn0",
+      "mobileUrl": "https://docs.google.com/document/d/1JXP9HHWTvQuyq1oTxjjl56kZ5zsPnRQQbi7QcFQRmn0/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-j-res-3401-joint-resolution-to-enact-a-legislative-reform.md",
+      "chars": 2612
+    },
+    {
+      "href": "https://docs.google.com/document/d/1-HOlHdCpoDylV_tNNFrLV5tPk05eOsCTDLl-YkX_OJk/edit?tab=t.0",
+      "label": "H. R. 3422 - Uniform Millitary Code",
+      "id": "1-HOlHdCpoDylV_tNNFrLV5tPk05eOsCTDLl-YkX_OJk",
+      "mobileUrl": "https://docs.google.com/document/d/1-HOlHdCpoDylV_tNNFrLV5tPk05eOsCTDLl-YkX_OJk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3422-uniform-millitary-code.md",
+      "chars": 12612
+    },
+    {
+      "href": "https://docs.google.com/document/d/1IW1N0yevBBRV6Y7yij4UnRJULKgCfFU5-eH2OZzKRZ0/edit?usp=sharing",
+      "label": "H. R. 3423 - Military Education Act",
+      "id": "1IW1N0yevBBRV6Y7yij4UnRJULKgCfFU5-eH2OZzKRZ0",
+      "mobileUrl": "https://docs.google.com/document/d/1IW1N0yevBBRV6Y7yij4UnRJULKgCfFU5-eH2OZzKRZ0/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3423-military-education-act.md",
+      "chars": 13137
+    },
+    {
+      "href": "https://docs.google.com/document/d/1A2s3GlAYasfgfkhEZNQ2DT4unmOD9Gptm9M8eLLlJ0A/edit?tab=t.0",
+      "label": "H. R. 3424 - Anti Discrimination Act",
+      "id": "1A2s3GlAYasfgfkhEZNQ2DT4unmOD9Gptm9M8eLLlJ0A",
+      "mobileUrl": "https://docs.google.com/document/d/1A2s3GlAYasfgfkhEZNQ2DT4unmOD9Gptm9M8eLLlJ0A/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3424-anti-discrimination-act.md",
+      "chars": 5045
+    },
+    {
+      "href": "https://docs.google.com/document/d/1QO-1bGFqqgYY2Vkiw431FHjBW6gVlK2Xgw5e-kfpQkk/edit?tab=t.0",
+      "label": "H. R. 3427 - Judicial Procedures Act",
+      "id": "1QO-1bGFqqgYY2Vkiw431FHjBW6gVlK2Xgw5e-kfpQkk",
+      "mobileUrl": "https://docs.google.com/document/d/1QO-1bGFqqgYY2Vkiw431FHjBW6gVlK2Xgw5e-kfpQkk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3427-judicial-procedures-act.md",
+      "chars": 16548
+    },
+    {
+      "href": "https://docs.google.com/document/d/1dPZeBZS2nibY1qtgTQBHcLqDGkRFzcino6YzLzp9mxA/edit?usp=sharing",
+      "label": "H. R. 3501 - Revised Quota Reduction Act",
+      "id": "1dPZeBZS2nibY1qtgTQBHcLqDGkRFzcino6YzLzp9mxA",
+      "mobileUrl": "https://docs.google.com/document/d/1dPZeBZS2nibY1qtgTQBHcLqDGkRFzcino6YzLzp9mxA/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3501-revised-quota-reduction-act.md",
+      "chars": 3559
+    },
+    {
+      "href": "https://docs.google.com/document/d/1dHFkNZlqngwG-PJ0ZF11GjOymB-U14xLysqcUXzleNk/edit?usp=sharing",
+      "label": "S. J. RES. 1303 - Repeal of H.R. 3027 \"Military Funding Act\"",
+      "id": "1dHFkNZlqngwG-PJ0ZF11GjOymB-U14xLysqcUXzleNk",
+      "mobileUrl": "https://docs.google.com/document/d/1dHFkNZlqngwG-PJ0ZF11GjOymB-U14xLysqcUXzleNk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/s-j-res-1303-repeal-of-h-r-3027-military-funding-act.md",
+      "chars": 1062
+    },
+    {
+      "href": "https://docs.google.com/document/d/11axNu5H9d8hKA8-BUPXDCnG9p1t1z47wXr5cNPNr3ew/edit?usp=sharing",
+      "label": "Revised Constitution of Clockwork’s United States Army",
+      "id": "11axNu5H9d8hKA8-BUPXDCnG9p1t1z47wXr5cNPNr3ew",
+      "mobileUrl": "https://docs.google.com/document/d/11axNu5H9d8hKA8-BUPXDCnG9p1t1z47wXr5cNPNr3ew/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/revised-constitution-of-clockworks-united-states-army.md",
+      "chars": 59125
+    },
+    {
+      "href": "https://docs.google.com/document/d/1fyvyIKDddCJouPaVpvXFn4-SVtuCHBnB0LjhJ-gS-XQ/edit?usp=sharing",
+      "label": "Amendment to Article 1, § 1 - Establishment and Powers, Clause 3.",
+      "id": "1fyvyIKDddCJouPaVpvXFn4-SVtuCHBnB0LjhJ-gS-XQ",
+      "mobileUrl": "https://docs.google.com/document/d/1fyvyIKDddCJouPaVpvXFn4-SVtuCHBnB0LjhJ-gS-XQ/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/amendment-to-article-1-1-establishment-and-powers-clause-3.md",
+      "chars": 1101
+    },
+    {
+      "href": "https://docs.google.com/document/d/1-LzEu4EM4F8z4d2pg4LacfmSpjA1TJ17tsIiZ1CcFtY/edit?usp=sharing",
+      "label": "Amendment to Article 2, § 2 - Presidential Powers and Duties, Clause 3.1.",
+      "id": "1-LzEu4EM4F8z4d2pg4LacfmSpjA1TJ17tsIiZ1CcFtY",
+      "mobileUrl": "https://docs.google.com/document/d/1-LzEu4EM4F8z4d2pg4LacfmSpjA1TJ17tsIiZ1CcFtY/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/amendment-to-article-2-2-presidential-powers-and-duties-clause-3-1.md",
+      "chars": 796
+    },
+    {
+      "href": "https://docs.google.com/document/d/1RX385zekLWcGZ1AnmUYHrI07qL4qUduxZKCcYSz-45s/edit?usp=sharing",
+      "label": "Amendment to Article 6, § 2 - Right to a Fair Trial, Clause 7.",
+      "id": "1RX385zekLWcGZ1AnmUYHrI07qL4qUduxZKCcYSz-45s",
+      "mobileUrl": "https://docs.google.com/document/d/1RX385zekLWcGZ1AnmUYHrI07qL4qUduxZKCcYSz-45s/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/amendment-to-article-6-2-right-to-a-fair-trial-clause-7.md",
+      "chars": 1187
+    },
+    {
+      "href": "https://docs.google.com/document/d/1FFtEigyyuud7ciwF221bienGjqJUkXO9FJRhJUYl-jk/edit?usp=sharing",
+      "label": "[CUSA] Code of Justice",
+      "id": "1FFtEigyyuud7ciwF221bienGjqJUkXO9FJRhJUYl-jk",
+      "mobileUrl": "https://docs.google.com/document/d/1FFtEigyyuud7ciwF221bienGjqJUkXO9FJRhJUYl-jk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/cusa-code-of-justice.md",
+      "chars": 34780
+    },
+    {
+      "href": "https://docs.google.com/document/d/1SmUdRkNOn043j8kgHNzfgsrfjwMnqtqR3cx3y1K83-k/edit?usp=sharing",
+      "label": "[CUSA] United States Code of Justice",
+      "id": "1SmUdRkNOn043j8kgHNzfgsrfjwMnqtqR3cx3y1K83-k",
+      "mobileUrl": "https://docs.google.com/document/d/1SmUdRkNOn043j8kgHNzfgsrfjwMnqtqR3cx3y1K83-k/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/cusa-united-states-code-of-justice.md",
+      "chars": 33892
+    },
+    {
+      "href": "https://docs.google.com/document/d/1TQciBGTn_orpRe4idu2mMVrxIOJMJKVApv1P4keffpo/edit?usp=sharing",
+      "label": "[CUSA] Revised Code of Justice",
+      "id": "1TQciBGTn_orpRe4idu2mMVrxIOJMJKVApv1P4keffpo",
+      "mobileUrl": "https://docs.google.com/document/d/1TQciBGTn_orpRe4idu2mMVrxIOJMJKVApv1P4keffpo/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/cusa-revised-code-of-justice.md",
+      "chars": 54053
+    },
+    {
+      "href": "https://docs.google.com/document/d/1Z3nEi2u6UVgVqzIaC-tK8O2LQmHK8-ftwx7Et-8IPQs/edit?usp=sharing",
+      "label": "H.R. 0353 \"Presumption of Innocence Act\" Revised",
+      "id": "1Z3nEi2u6UVgVqzIaC-tK8O2LQmHK8-ftwx7Et-8IPQs",
+      "mobileUrl": "https://docs.google.com/document/d/1Z3nEi2u6UVgVqzIaC-tK8O2LQmHK8-ftwx7Et-8IPQs/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0353-presumption-of-innocence-act-revised.md",
+      "chars": 1181
+    },
+    {
+      "href": "https://docs.google.com/document/d/1yqrH8x0cha6Lo1xWh6m5WF4u-PTV_RhZAEk2FykTEG4/edit?usp=sharing",
+      "label": "H.R. 0361 \"Leadership Competence Act\" Revised",
+      "id": "1yqrH8x0cha6Lo1xWh6m5WF4u-PTV_RhZAEk2FykTEG4",
+      "mobileUrl": "https://docs.google.com/document/d/1yqrH8x0cha6Lo1xWh6m5WF4u-PTV_RhZAEk2FykTEG4/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0361-leadership-competence-act-revised.md",
+      "chars": 2652
+    },
+    {
+      "href": "https://docs.google.com/document/d/1D7y9jcNSqogKMPTwv7klf5sJU-UUftp8KJHPEeeCEw0/edit?usp=sharing",
+      "label": "H.R. 0462 \"Recess Inclusion Act\" Revised",
+      "id": "1D7y9jcNSqogKMPTwv7klf5sJU-UUftp8KJHPEeeCEw0",
+      "mobileUrl": "https://docs.google.com/document/d/1D7y9jcNSqogKMPTwv7klf5sJU-UUftp8KJHPEeeCEw0/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0462-recess-inclusion-act-revised.md",
+      "chars": 1610
+    },
+    {
+      "href": "https://docs.google.com/document/d/1KHqjUgQWXTGZR9RU6jam6wRJ-s6vMpA5g9OHqzEVcvs/edit?usp=sharing",
+      "label": "H.R. 0517 \"Witness Protection Act\" Revised",
+      "id": "1KHqjUgQWXTGZR9RU6jam6wRJ-s6vMpA5g9OHqzEVcvs",
+      "mobileUrl": "https://docs.google.com/document/d/1KHqjUgQWXTGZR9RU6jam6wRJ-s6vMpA5g9OHqzEVcvs/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0517-witness-protection-act-revised.md",
+      "chars": 1450
+    },
+    {
+      "href": "https://docs.google.com/document/d/1YJd1E8F9ScHw8UJsiYaC4pUHtu56rEd9cJ5P7AEOL2o/edit?usp=sharing",
+      "label": "H.R. 0602 \"Personnel Gender Protection & Rights Act\" Revised",
+      "id": "1YJd1E8F9ScHw8UJsiYaC4pUHtu56rEd9cJ5P7AEOL2o",
+      "mobileUrl": "https://docs.google.com/document/d/1YJd1E8F9ScHw8UJsiYaC4pUHtu56rEd9cJ5P7AEOL2o/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0602-personnel-gender-protection-rights-act-revised.md",
+      "chars": 2574
+    },
+    {
+      "href": "https://docs.google.com/document/d/1dUNpVd9UBat0EQc6Zy1pOYDL-jXDXRWJUortQtb63XE/edit?usp=sharing",
+      "label": "H.R. 1147 \"Base Access Limitations Act\" Revised",
+      "id": "1dUNpVd9UBat0EQc6Zy1pOYDL-jXDXRWJUortQtb63XE",
+      "mobileUrl": "https://docs.google.com/document/d/1dUNpVd9UBat0EQc6Zy1pOYDL-jXDXRWJUortQtb63XE/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1147-base-access-limitations-act-revised.md",
+      "chars": 2098
+    },
+    {
+      "href": "https://docs.google.com/document/d/1ZwcKMhUvO6YCaWsEEws7Sk-OzAB4APXJ2go2wttb0RU/edit?usp=sharing",
+      "label": "H.R. 1155 \"Training & Tryout Limitation Act\" Revised",
+      "id": "1ZwcKMhUvO6YCaWsEEws7Sk-OzAB4APXJ2go2wttb0RU",
+      "mobileUrl": "https://docs.google.com/document/d/1ZwcKMhUvO6YCaWsEEws7Sk-OzAB4APXJ2go2wttb0RU/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1155-training-tryout-limitation-act-revised.md",
+      "chars": 1856
+    },
+    {
+      "href": "https://docs.google.com/document/d/1wfJ-rZQKGh2Pj3XXTrZmyuA8JA3XI1EHohWDG5vuC9Q/edit?tab=t.0",
+      "label": "H.R. 1158 \"The Pursuit and Trespass Act\" Revised Proposed Amendments",
+      "id": "1wfJ-rZQKGh2Pj3XXTrZmyuA8JA3XI1EHohWDG5vuC9Q",
+      "mobileUrl": "https://docs.google.com/document/d/1wfJ-rZQKGh2Pj3XXTrZmyuA8JA3XI1EHohWDG5vuC9Q/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1158-the-pursuit-and-trespass-act-revised-proposed-amendments.md",
+      "chars": 4009
+    },
+    {
+      "href": "https://docs.google.com/document/d/19N0GC4OD05AD87X2O4aRAgeeBoK4SsYNku5_b8exLN0/edit?usp=sharing",
+      "label": "H.R. 1208 \"Countersuit Prevention Act\" Revised",
+      "id": "19N0GC4OD05AD87X2O4aRAgeeBoK4SsYNku5_b8exLN0",
+      "mobileUrl": "https://docs.google.com/document/d/19N0GC4OD05AD87X2O4aRAgeeBoK4SsYNku5_b8exLN0/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1208-countersuit-prevention-act-revised.md",
+      "chars": 2574
+    },
+    {
+      "href": "https://docs.google.com/document/d/1SkNtt8uWjUmvzR689fEWUnCLvB75n4gMHMya-Ywwspk/edit?usp=sharing",
+      "label": "H.R. 1302 \"Superior Sabotage Act\" Revised",
+      "id": "1SkNtt8uWjUmvzR689fEWUnCLvB75n4gMHMya-Ywwspk",
+      "mobileUrl": "https://docs.google.com/document/d/1SkNtt8uWjUmvzR689fEWUnCLvB75n4gMHMya-Ywwspk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1302-superior-sabotage-act-revised.md",
+      "chars": 1473
+    },
+    {
+      "href": "https://docs.google.com/document/d/1KHrG-X4L8V9G_52ntTrFtBdLaKS8F3cSEq7vT5mPb6o/edit?usp=sharing",
+      "label": "H.R. 1406 \"Divisional Guard Act\" Revised",
+      "id": "1KHrG-X4L8V9G_52ntTrFtBdLaKS8F3cSEq7vT5mPb6o",
+      "mobileUrl": "https://docs.google.com/document/d/1KHrG-X4L8V9G_52ntTrFtBdLaKS8F3cSEq7vT5mPb6o/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1406-divisional-guard-act-revised.md",
+      "chars": 1844
+    },
+    {
+      "href": "https://docs.google.com/document/d/1cO0AdTO9ZQwnWvvWkg_b_u198tF_obVyPJ7iyY9KOJk/edit?usp=sharing",
+      "label": "H.R. 1705 \"Internal Gate Trespassing Act\" Revised",
+      "id": "1cO0AdTO9ZQwnWvvWkg_b_u198tF_obVyPJ7iyY9KOJk",
+      "mobileUrl": "https://docs.google.com/document/d/1cO0AdTO9ZQwnWvvWkg_b_u198tF_obVyPJ7iyY9KOJk/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1705-internal-gate-trespassing-act-revised.md",
+      "chars": 2746
+    },
+    {
+      "href": "https://docs.google.com/document/d/17XVXPHHtR_-YBP3svXLfMBfAp0HpJEF9g5CMAK4f13k/edit",
+      "label": "H.R. 1707 \"Court Statement Limitation Act\"",
+      "id": "17XVXPHHtR_-YBP3svXLfMBfAp0HpJEF9g5CMAK4f13k",
+      "mobileUrl": "https://docs.google.com/document/d/17XVXPHHtR_-YBP3svXLfMBfAp0HpJEF9g5CMAK4f13k/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-1707-court-statement-limitation-act.md",
+      "chars": 2592
+    },
+    {
+      "href": "https://docs.google.com/document/d/14zobRvyqjWG1silaGX8i7mYHC_Wyh6a24mFWmpiiYIU/edit?usp=sharing",
+      "label": "Basic Education Act",
+      "id": "14zobRvyqjWG1silaGX8i7mYHC_Wyh6a24mFWmpiiYIU",
+      "mobileUrl": "https://docs.google.com/document/d/14zobRvyqjWG1silaGX8i7mYHC_Wyh6a24mFWmpiiYIU/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/basic-education-act.md",
+      "chars": 1903
+    },
+    {
+      "href": "https://docs.google.com/document/d/1aNUB69dn3b3DbH-rWFE0Y915wdBxkoMMwtaFr1Mc0rg/edit",
+      "label": "H.R. 0087 Government Meeting Act",
+      "id": "1aNUB69dn3b3DbH-rWFE0Y915wdBxkoMMwtaFr1Mc0rg",
+      "mobileUrl": "https://docs.google.com/document/d/1aNUB69dn3b3DbH-rWFE0Y915wdBxkoMMwtaFr1Mc0rg/mobilebasic",
+      "status": "failed",
+      "error": "HTTP 410"
+    },
+    {
+      "href": "https://docs.google.com/document/d/10RuJ-GF-LdPTOl-sahAnOt-Sr2lkQwVCz23EZlOfXvc/edit",
+      "label": "H.R. 0099 Cuff Training and Evaluation Act.",
+      "id": "10RuJ-GF-LdPTOl-sahAnOt-Sr2lkQwVCz23EZlOfXvc",
+      "mobileUrl": "https://docs.google.com/document/d/10RuJ-GF-LdPTOl-sahAnOt-Sr2lkQwVCz23EZlOfXvc/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-0099-cuff-training-and-evaluation-act.md",
+      "chars": 1858
+    },
+    {
+      "href": "https://docs.google.com/document/d/10tETPNR7WGBCUzFn8lVUU3dQcgMjC0g5C14FoQc-lWo",
+      "label": "NSA Accountability Act",
+      "id": "10tETPNR7WGBCUzFn8lVUU3dQcgMjC0g5C14FoQc-lWo",
+      "mobileUrl": "https://docs.google.com/document/d/10tETPNR7WGBCUzFn8lVUU3dQcgMjC0g5C14FoQc-lWo/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/nsa-accountability-act.md",
+      "chars": 1639
+    },
+    {
+      "href": "https://docs.google.com/document/d/1XEPz7z3sMzM5aDvwy8pftQKKD83apjEIR0cRZyrrMQM/edit",
+      "label": "Crimson Raiders Protection Act",
+      "id": "1XEPz7z3sMzM5aDvwy8pftQKKD83apjEIR0cRZyrrMQM",
+      "mobileUrl": "https://docs.google.com/document/d/1XEPz7z3sMzM5aDvwy8pftQKKD83apjEIR0cRZyrrMQM/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/crimson-raiders-protection-act.md",
+      "chars": 4697
+    },
+    {
+      "href": "https://docs.google.com/document/d/1atvfwRLH2S41j9jzFpUUejJMAElYfBzm2k7nhvOPWto/edit?tab=t.0#heading=h.70c0wh95oed9",
+      "label": "H.R. 3413 - General Tryout/Examination Fairness Act Revised",
+      "id": "1atvfwRLH2S41j9jzFpUUejJMAElYfBzm2k7nhvOPWto",
+      "mobileUrl": "https://docs.google.com/document/d/1atvfwRLH2S41j9jzFpUUejJMAElYfBzm2k7nhvOPWto/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3413-general-tryout-examination-fairness-act-revised.md",
+      "chars": 4520
+    },
+    {
+      "href": "https://docs.google.com/document/d/1ViiDRPhZ9tzainOSEGLEK5KTTf2fjlWC4npPwMnXniA/edit?tab=t.0",
+      "label": "H.R. 3104 \"Multi-Division Quota Relief Act\"",
+      "id": "1ViiDRPhZ9tzainOSEGLEK5KTTf2fjlWC4npPwMnXniA",
+      "mobileUrl": "https://docs.google.com/document/d/1ViiDRPhZ9tzainOSEGLEK5KTTf2fjlWC4npPwMnXniA/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3104-multi-division-quota-relief-act.md",
+      "chars": 1330
+    },
+    {
+      "href": "https://docs.google.com/document/d/1gix-41zvsUrZBkcLCcphIiArHGf8mVFCvYZr4s9Cjwg/edit?usp=sharing",
+      "label": "The Quota Reduction Act",
+      "id": "1gix-41zvsUrZBkcLCcphIiArHGf8mVFCvYZr4s9Cjwg",
+      "mobileUrl": "https://docs.google.com/document/d/1gix-41zvsUrZBkcLCcphIiArHGf8mVFCvYZr4s9Cjwg/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/the-quota-reduction-act.md",
+      "chars": 1126
+    },
+    {
+      "href": "https://docs.google.com/document/d/1yn2cN2-oxPoaiHm6_HGBJrpYQR3zgnNbYH_Nv1vUZcs/edit?usp=sharing",
+      "label": "H.R. 3027 Military Funding Act",
+      "id": "1yn2cN2-oxPoaiHm6_HGBJrpYQR3zgnNbYH_Nv1vUZcs",
+      "mobileUrl": "https://docs.google.com/document/d/1yn2cN2-oxPoaiHm6_HGBJrpYQR3zgnNbYH_Nv1vUZcs/mobilebasic",
+      "status": "failed",
+      "error": "HTTP 410"
+    },
+    {
+      "href": "https://docs.google.com/document/d/1zDKTSxQvsetuURP8QjGH0q-jusAYyr8BNL41wiqIbDE/edit?usp=sharing",
+      "label": "H. R. 3434 - Revised Government Meeting Act",
+      "id": "1zDKTSxQvsetuURP8QjGH0q-jusAYyr8BNL41wiqIbDE",
+      "mobileUrl": "https://docs.google.com/document/d/1zDKTSxQvsetuURP8QjGH0q-jusAYyr8BNL41wiqIbDE/mobilebasic",
+      "status": "imported",
+      "file": "docs/rp-law/legislation/h-r-3434-revised-government-meeting-act.md",
+      "chars": 5146
+    }
+  ]
+}
