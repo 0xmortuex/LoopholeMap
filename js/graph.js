@@ -331,6 +331,7 @@ function neighborsOf(nodeId) {
 }
 
 function highlightNeighborhood(nodeId) {
+  if (!nodeSel || !linkSel) return;
   const ids = neighborsOf(nodeId);
   nodeSel.classed('dimmed', d => !ids.has(d.id));
   linkSel.classed('dimmed', d => {
@@ -341,12 +342,14 @@ function highlightNeighborhood(nodeId) {
 }
 
 function clearHighlight() {
+  if (!nodeSel || !linkSel) return;
   nodeSel.classed('dimmed', false);
   linkSel.classed('dimmed', false);
 }
 
 function focusNode(nodeId) {
   focusedId = nodeId;
+  if (!nodeSel) return;
   nodeSel.classed('focused', d => d.id === nodeId);
   highlightNeighborhood(nodeId);
   centerOnNode(nodeId, { pulse: false });
@@ -369,6 +372,7 @@ function setFilters(filters) {
 
   const visible = d => (!severities.size || severities.has(d.severity)) && (!types.size || types.has(d.type));
 
+  if (!nodeSel || !linkSel) return;
   nodeSel.classed('filtered-out', d => !visible(d));
   linkSel.classed('filtered-out', d => {
     const s = typeof d.source === 'object' ? d.source : nodeMap[d.source];
@@ -480,7 +484,7 @@ function centerOnNode(nodeId, opts = {}) {
   const node = nodeMap[nodeId];
   if (!node || !svg) return;
 
-  if (opts.pulse !== false) {
+  if (opts.pulse !== false && nodeSel) {
     focusedId = nodeId;
     nodeSel.classed('focused', d => d.id === nodeId);
     highlightNeighborhood(nodeId);
