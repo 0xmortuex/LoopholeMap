@@ -149,7 +149,7 @@ async function startScan(text) {
     const raw = await analyzeRegulation(text);
     analysisData = parseAnalysisResponse(raw);
     showGraphView(analysisData);
-    showToast(`Found ${analysisData.nodes.length} vulnerabilities`, 'success');
+    showScanResultToast(analysisData);
   } catch (err) {
     showToast(err.message || 'Analysis failed', 'error');
   } finally {
@@ -158,6 +158,19 @@ async function startScan(text) {
     scanBtn.innerHTML = SCAN_ICON_MARKUP;
     textarea.classList.remove('scanning');
   }
+}
+
+function showScanResultToast(data) {
+  const filteredCount = data.filteredOwnershipTeamNodes || 0;
+
+  if (data.nodes.length === 0 && filteredCount > 0) {
+    showToast(`No reportable non-OT vulnerabilities found (${filteredCount} OT-only excluded)`, 'info');
+    return;
+  }
+
+  const noun = data.nodes.length === 1 ? 'vulnerability' : 'vulnerabilities';
+  const suffix = filteredCount > 0 ? ` (${filteredCount} OT-only excluded)` : '';
+  showToast(`Found ${data.nodes.length} ${noun}${suffix}`, 'success');
 }
 
 /* ===== Graph view population ===== */

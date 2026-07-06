@@ -47,9 +47,14 @@ function parseAnalysisResponse(raw) {
     throw new Error('Response missing nodes array');
   }
 
-  const nodes = parsed.nodes.map((n, i) => validateNode(n, i)).filter(Boolean);
+  const validatedNodes = parsed.nodes.map((n, i) => validateNode(n, i)).filter(Boolean);
+  const nodes = validatedNodes.filter(node => !isOwnershipTeamAuthorityNode(node));
+  const filteredOwnershipTeamNodes = validatedNodes.length - nodes.length;
 
   if (nodes.length === 0) {
+    if (filteredOwnershipTeamNodes > 0) {
+      return buildOwnershipTeamOnlyResult(parsed, filteredOwnershipTeamNodes);
+    }
     throw new Error('No valid nodes found in response');
   }
 
@@ -70,7 +75,8 @@ function parseAnalysisResponse(raw) {
     overallRisk: VALID_RISK_LEVELS.includes(parsed.overallRisk) ? parsed.overallRisk : 'medium',
     summary: typeof parsed.summary === 'string' ? parsed.summary : 'Analysis complete.',
     nodes,
-    connections
+    connections,
+    filteredOwnershipTeamNodes
   };
 }
 
@@ -98,6 +104,61 @@ function validateNode(node, index) {
     id, title, type, severity, section, description, exploitation,
     realWorldParallel, suggestedFix, possibility, difficulty, connectedNodes
   };
+}
+
+function buildOwnershipTeamOnlyResult(parsed, filteredOwnershipTeamNodes) {
+  return {
+    title: typeof parsed.title === 'string' ? parsed.title : 'Regulation Analysis',
+    overallRisk: 'low',
+    summary: `No reportable non-OT vulnerabilities found. ${filteredOwnershipTeamNodes} Ownership Team-only finding${filteredOwnershipTeamNodes === 1 ? ' was' : 's were'} excluded because OT authority is supreme in this RP setting.`,
+    nodes: [],
+    connections: [],
+    filteredOwnershipTeamNodes
+  };
+}
+
+function isOwnershipTeamAuthorityNode(node) {
+  const text = normalizeOwnershipFilterText([
+    node.title,
+    node.type,
+    node.section,
+    node.description,
+    node.exploitation,
+    node.realWorldParallel,
+    node.suggestedFix,
+    ...(node.connectedNodes || [])
+  ].join(' '));
+
+  if (!hasOwnershipTeamReference(text)) return false;
+
+  // OT itself is not a loophole in this RP setting. Keep findings only when
+  // the issue is a non-OT actor receiving or pretending to have OT authority.
+  return !isNonOtDelegationOrImpersonationIssue(text);
+}
+
+function hasOwnershipTeamReference(text) {
+  return /\bownership team\b|\bot\b/.test(text);
+}
+
+function isNonOtDelegationOrImpersonationIssue(text) {
+  const exceptionPatterns = [
+    /\bnon[-\s]?ot\b/,
+    /\bnon[-\s]?ownership team\b/,
+    /\bnot (?:the )?ownership team\b/,
+    /\boutside (?:the )?ownership team\b/,
+    /\bunauthorized\b.*\b(?:ownership team|ot)\b/,
+    /\b(?:impersonat|pretend|masquerad|pose as|claim(?:s|ed|ing)? to be)\b.*\b(?:ownership team|ot)\b/
+  ];
+  return exceptionPatterns.some(pattern => pattern.test(text));
+}
+
+function normalizeOwnershipFilterText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[’']/g, '')
+    .replace(/[^a-z0-9-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function normalizePossibility(value) {

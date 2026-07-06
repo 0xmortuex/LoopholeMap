@@ -28,7 +28,8 @@ When reviewing a proposed RP Congress bill:
 5. Preserve exact article, section, clause, bill number, act title, and title references when citing RP legal sources.
 6. Separate gameplay/policy preference from legal compatibility. A bill can be bad policy without being unconstitutional.
 7. Treat the Ownership Team (OT) as supreme in-universe authority. OT-related powers, approvals, overrides, exemptions, discretion, or actions should not be counted as loopholes, constitutional conflicts, Code of Justice inconsistencies, or amendment requirements.
-8. Do not fabricate missing constitutional, Code of Justice, or legislation provisions. If the reference text is absent or ambiguous, say that directly.
+8. Exclude OT-only findings entirely. Only report OT-related content when the bill gives OT powers to a non-OT actor or allows someone to impersonate OT; frame that as the non-OT delegation or impersonation issue.
+9. Do not fabricate missing constitutional, Code of Justice, or legislation provisions. If the reference text is absent or ambiguous, say that directly.
 
 ## Existing App Vocabulary
 
