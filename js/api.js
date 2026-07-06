@@ -11,7 +11,10 @@ const WARN_INPUT_CHARS = Math.round(MAX_INPUT_CHARS * 0.85);
 
 // Analyses can be slow (large regulation + AI reasoning). Give it real
 // room before treating the request as hung.
-const REQUEST_TIMEOUT_MS = 45000;
+// Sonnet 5 with a large legal-context prompt and up to 8000 output tokens can
+// legitimately take well over a minute. Kept just under Cloudflare's ~100s
+// edge timeout so we still fail gracefully rather than hang forever.
+const REQUEST_TIMEOUT_MS = 92000;
 
 function checkInputLength(text) {
   if (typeof text !== 'string') return;
@@ -37,7 +40,7 @@ async function postToProxy(body) {
     });
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('The analysis is taking longer than expected (45s+) and timed out. Please try again — shorter texts usually respond faster.');
+      throw new Error('The analysis is taking longer than expected (90s+) and timed out. Please try again — shorter bills respond faster.');
     }
     throw new Error('Could not reach the analysis server. Check your connection and try again.');
   } finally {
