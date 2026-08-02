@@ -8,8 +8,10 @@
    ========================================================================= */
 
 const STORE_KEY = 'loopholemap_history_v1';
-const MAX_ENTRIES = 20;
-// localStorage is typically ~5MB per origin and shared with other keys.
+const MAX_ENTRIES = 100;
+// Size, not count, is the real limit: localStorage is typically ~5M UTF-16
+// chars per origin, shared with this app's other keys. Entries are evicted
+// oldest-first once either bound is hit.
 const MAX_BYTES = 3_000_000;
 
 function readAll() {
@@ -24,19 +26,27 @@ function readAll() {
 }
 
 function writeAll(entries) {
-  let list = entries.slice(0, MAX_ENTRIES);
-  // Trim oldest until the payload fits, then until the browser accepts it.
+  // Size-prune in a single pass — keep newest entries until the budget is
+  // spent. (Re-serializing the whole array once per dropped entry gets
+  // expensive at 100 entries of multi-KB analyses.)
+  let used = 2; // the enclosing [ ]
+  let list = [];
+  for (const entry of entries.slice(0, MAX_ENTRIES)) {
+    const size = JSON.stringify(entry).length + 1; // + separating comma
+    if (list.length && used + size > MAX_BYTES) break;
+    used += size;
+    list.push(entry); // always keep the newest, even if it alone is oversized
+  }
+
+  // The browser can still refuse (quota is shared with other keys and other
+  // origins' behaviour varies), so drop the oldest and retry until it sticks.
   while (list.length) {
-    const serialized = JSON.stringify(list);
-    if (serialized.length <= MAX_BYTES) {
-      try {
-        localStorage.setItem(STORE_KEY, serialized);
-        return list;
-      } catch {
-        /* quota exceeded — drop the oldest and retry */
-      }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(list));
+      return list;
+    } catch {
+      list = list.slice(0, -1);
     }
-    list = list.slice(0, -1);
   }
   try { localStorage.removeItem(STORE_KEY); } catch { /* ignore */ }
   return [];
