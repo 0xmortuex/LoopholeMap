@@ -1,4 +1,4 @@
-import { analyzeRegulation, MAX_INPUT_CHARS, WARN_INPUT_CHARS } from './api.js';
+import { analyzeRegulation, setReferenceMode, MAX_INPUT_CHARS, WARN_INPUT_CHARS } from './api.js';
 import { parseAnalysisResponse, VALID_TYPES, VALID_RELATIONSHIP_TYPES, POSSIBILITY_LABELS, DIFFICULTY_LABELS } from './parser.js';
 import {
   initBoard, destroyBoard, centerOnNode, setFilters, clearFocus,
@@ -6,6 +6,10 @@ import {
 } from './board.js';
 import { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel } from './panel.js';
 import { SAMPLE_REGULATION } from './samples.js';
+import {
+  buildIssuesReport, copyText, buildShareUrl, decodeSharePayload,
+  readShareToken, clearShareToken, MAX_SHARE_URL_CHARS
+} from './share.js';
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 // Issue types that only make sense against the RP legal corpus.
@@ -36,10 +40,37 @@ function init() {
   wireRailToggle();
   wireCollapsibles();
   wireAskFab();
+  wireResultActions();
 
   initPanel([], [], { onJumpToNode: (id) => centerOnNode(id) });
 
   window._showToast = showToast;
+
+  restoreSharedAnalysis();
+  // Pasting a share link into the address bar while already on the site only
+  // changes the fragment — no reload, so DOMContentLoaded never fires again.
+  window.addEventListener('hashchange', () => restoreSharedAnalysis());
+}
+
+/* ===== Shared links ===== */
+
+async function restoreSharedAnalysis() {
+  const token = readShareToken();
+  if (!token) return;
+
+  try {
+    const { data, rpMode } = await decodeSharePayload(token);
+    analysisData = data;
+    boardRpMode = rpMode;
+    setReferenceMode(rpMode);
+    showGraphView(data);
+    $('shared-banner').hidden = false;
+    showToast('Opened a shared analysis', 'info');
+  } catch (err) {
+    // A truncated or hand-edited link shouldn't leave a dead fragment behind.
+    clearShareToken();
+    showToast(err.message || 'That share link could not be opened', 'error');
+  }
 }
 
 /* ===== Scan / Input ===== */
@@ -298,6 +329,9 @@ async function startScan(text) {
     analysisData = parseAnalysisResponse(raw);
     if (!rpMode) remapRpOnlyTypes(analysisData);
     boardRpMode = rpMode;
+    // A fresh scan replaces any shared analysis that was on screen.
+    $('shared-banner').hidden = true;
+    clearShareToken();
     ScanProgress.succeed();
     showGraphView(analysisData);
     showScanResultToast(analysisData);
@@ -575,6 +609,73 @@ function wireCollapsibles() {
 
 function wireAskFab() {
   $('ask-fab').addEventListener('click', () => openChatGeneral());
+}
+
+/* ===== Copy / Share ===== */
+
+function flashCopied(btn) {
+  btn.classList.add('copied');
+  setTimeout(() => btn.classList.remove('copied'), 1400);
+}
+
+function wireResultActions() {
+  const copyBtn = $('copy-issues-btn');
+  const shareBtn = $('share-btn');
+
+  copyBtn.addEventListener('click', async () => {
+    if (!analysisData) return;
+    const report = buildIssuesReport(analysisData, isRpLegalMode());
+    if (await copyText(report)) {
+      flashCopied(copyBtn);
+      const n = analysisData.nodes.length;
+      showToast(`Copied ${n} issue${n === 1 ? '' : 's'} to the clipboard`, 'success');
+    } else {
+      showToast('Could not access the clipboard — copy blocked by the browser', 'error');
+    }
+  });
+
+  shareBtn.addEventListener('click', async () => {
+    if (!analysisData) return;
+    shareBtn.disabled = true;
+    try {
+      const url = await buildShareUrl(analysisData, isRpLegalMode());
+
+      // Very large analyses make links that chat apps and mail clients
+      // truncate, so fall back to the plain-text report instead of handing
+      // out a link that will arrive broken.
+      if (url.length > MAX_SHARE_URL_CHARS) {
+        const report = buildIssuesReport(analysisData, isRpLegalMode());
+        if (await copyText(report)) {
+          showToast('Analysis too large for a link — copied the full report instead', 'info');
+        } else {
+          showToast('Analysis too large to share as a link', 'error');
+        }
+        return;
+      }
+
+      // Mobile: hand off to the OS share sheet when available.
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: `LoopholeMap — ${analysisData.title}`, url });
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return; // user dismissed the sheet
+          /* otherwise fall through to clipboard */
+        }
+      }
+
+      if (await copyText(url)) {
+        flashCopied(shareBtn);
+        showToast('Share link copied — anyone with it sees these results', 'success');
+      } else {
+        showToast('Could not access the clipboard — copy blocked by the browser', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Could not build a share link', 'error');
+    } finally {
+      shareBtn.disabled = false;
+    }
+  });
 }
 
 /* ===== Toasts ===== */

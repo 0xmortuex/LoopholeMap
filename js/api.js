@@ -204,4 +204,10 @@ async function askAI(contextType, contextData, question) {
   });
 }
 
-export { analyzeRegulation, getNodeDetail, askAI, MAX_INPUT_CHARS, WARN_INPUT_CHARS };
+// Used when a board is restored from a share link rather than a live scan, so
+// node-detail and Ask AI follow the mode the analysis was produced in.
+function setReferenceMode(rpMode) {
+  rpReferenceMode = !!rpMode;
+}
+
+export { analyzeRegulation, getNodeDetail, askAI, setReferenceMode, MAX_INPUT_CHARS, WARN_INPUT_CHARS };

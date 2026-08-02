@@ -48,6 +48,14 @@
     <aside class="left-rail" id="left-rail">
       <div class="rail-inner">
 
+        <div class="shared-banner" id="shared-banner" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+          </svg>
+          <span><strong>Shared analysis.</strong> Scan your own text below to replace it.</span>
+        </div>
+
         <section class="rail-section" id="scan-section">
           <p class="tagline">Find the cracks in any regulation</p>
           <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Analysis mode">
@@ -118,10 +126,26 @@
         </section>
 
         <section class="rail-section rail-collapsible collapsed" id="issues-section" hidden>
-          <button class="rail-section-header" data-collapse-target="issues-body">
-            <span>All Issues</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
+          <div class="rail-section-header-row">
+            <button class="rail-section-header" data-collapse-target="issues-body">
+              <span>All Issues</span>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="rail-section-actions">
+              <button type="button" class="icon-btn" id="copy-issues-btn" title="Copy all issues as text" aria-label="Copy all issues as text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="12" height="12" rx="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+              <button type="button" class="icon-btn" id="share-btn" title="Share these results" aria-label="Share these results">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
           <div class="rail-section-body" id="issues-body">
             <div class="node-list" id="node-list"></div>
           </div>

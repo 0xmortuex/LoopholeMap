@@ -322,6 +322,65 @@ textarea:focus-visible,
   transition: transform var(--dur-base) var(--ease-out);
 }
 .rail-collapsible.collapsed .chevron { transform: rotate(-90deg); }
+
+/* Header row: collapse trigger + action buttons (Copy / Share). */
+.rail-section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 10px;
+}
+.rail-section-header-row .rail-section-header {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+.rail-section-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.icon-btn svg { width: 15px; height: 15px; }
+.icon-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--border-soft);
+  color: var(--text);
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.copied {
+  color: var(--accent-green);
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* Banner shown when viewing an analysis opened from a shared link. */
+.shared-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--bg-2));
+  border: 1px solid color-mix(in srgb, var(--accent-2) 38%, var(--border-soft));
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.shared-banner[hidden] { display: none; }
+.shared-banner svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--accent-2); }
+.shared-banner strong { color: var(--text); font-weight: 600; }
 .rail-section-body {
   padding: 0 16px 16px;
   display: grid;
