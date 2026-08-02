@@ -47,6 +47,9 @@ function initPanel(nodes, connections, callbacks = {}) {
   currentNode = null;
   chatMessages = [];
   onJumpToNode = callbacks.onJumpToNode || null;
+  // Node IDs (n1, n2, …) restart at 1 for every analysis, so a cache carried
+  // over from a previous scan would serve the wrong bill's deep dive.
+  deepDiveCache.clear();
 
   $('detail-view').innerHTML = `<div class="detail-placeholder">Click a node in the graph to see its full analysis here.</div>`;
   $('chat-messages').innerHTML = '';
@@ -426,4 +429,26 @@ function escapeHtml(text) {
 
 wireTabs();
 
-export { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel };
+/* ===== Deep-dive cache access (used by the copy-report action) ===== */
+
+function hasDeepDive(nodeId) {
+  return deepDiveCache.has(nodeId);
+}
+
+// Returns the cached deep dive, fetching and caching it if needed. Shares the
+// cache with the detail panel, so a node opened in the UI is never re-fetched.
+async function ensureDeepDive(node) {
+  if (deepDiveCache.has(node.id)) return deepDiveCache.get(node.id);
+  const detail = parseDetailResponse(await getNodeDetail(node));
+  deepDiveCache.set(node.id, detail);
+  return detail;
+}
+
+function clearDeepDiveCache() {
+  deepDiveCache.clear();
+}
+
+export {
+  initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel,
+  hasDeepDive, ensureDeepDive, clearDeepDiveCache
+};

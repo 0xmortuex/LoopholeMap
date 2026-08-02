@@ -4,7 +4,10 @@ import {
   initBoard, destroyBoard, centerOnNode, setFilters, clearFocus,
   TYPE_COLORS, TYPE_GLYPHS, SEVERITY_COLORS
 } from './board.js';
-import { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel } from './panel.js';
+import {
+  initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel,
+  hasDeepDive, ensureDeepDive
+} from './panel.js';
 import { SAMPLE_REGULATION } from './samples.js';
 import {
   buildIssuesReport, copyText, buildShareUrl, decodeSharePayload,
@@ -618,20 +621,68 @@ function flashCopied(btn) {
   setTimeout(() => btn.classList.remove('copied'), 1400);
 }
 
+// Run `worker` over items with bounded concurrency so a big analysis doesn't
+// fire a dozen simultaneous requests at the proxy.
+async function runPool(items, limit, worker) {
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      await worker(items[cursor++]);
+    }
+  });
+  await Promise.all(runners);
+}
+
 function wireResultActions() {
   const copyBtn = $('copy-issues-btn');
   const shareBtn = $('share-btn');
 
   copyBtn.addEventListener('click', async () => {
-    if (!analysisData) return;
-    const report = buildIssuesReport(analysisData, isRpLegalMode());
-    if (await copyText(report)) {
-      flashCopied(copyBtn);
-      const n = analysisData.nodes.length;
-      showToast(`Copied ${n} issue${n === 1 ? '' : 's'} to the clipboard`, 'success');
-    } else {
-      showToast('Could not access the clipboard — copy blocked by the browser', 'error');
+    if (!analysisData || copyBtn.disabled) return;
+    const nodes = analysisData.nodes;
+    const missing = nodes.filter(n => !hasDeepDive(n.id));
+    const deepDives = new Map();
+    let failed = 0;
+
+    // The scan returns the issue itself; the deep analysis is a separate
+    // per-issue request. Pull down whatever hasn't been opened yet so the
+    // copied report is complete.
+    if (missing.length) {
+      copyBtn.disabled = true;
+      copyBtn.classList.add('busy');
+      showToast(
+        `Building full report — fetching deep analysis for ${missing.length} issue${missing.length === 1 ? '' : 's'}…`,
+        'info'
+      );
     }
+
+    try {
+      await runPool(nodes, 3, async (node) => {
+        try {
+          deepDives.set(node.id, await ensureDeepDive(node));
+        } catch {
+          failed++; // report still includes everything from the scan
+        }
+      });
+    } finally {
+      copyBtn.disabled = false;
+      copyBtn.classList.remove('busy');
+    }
+
+    const report = buildIssuesReport(analysisData, isRpLegalMode(), deepDives);
+    if (!(await copyText(report))) {
+      showToast('Could not access the clipboard — copy blocked by the browser', 'error');
+      return;
+    }
+
+    flashCopied(copyBtn);
+    const n = nodes.length;
+    showToast(
+      failed
+        ? `Copied ${n} issue${n === 1 ? '' : 's'} — deep analysis unavailable for ${failed}`
+        : `Copied full report: ${n} issue${n === 1 ? '' : 's'} with deep analysis`,
+      failed ? 'info' : 'success'
+    );
   });
 
   shareBtn.addEventListener('click', async () => {
