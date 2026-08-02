@@ -11,7 +11,9 @@ import {
   POSSIBILITY_LABELS, DIFFICULTY_LABELS, EFFECTIVENESS_LABELS, IMPORTANCE_LABELS
 } from './parser.js';
 
-const SHARE_VERSION = 1;
+// v1 links carry the scan only; v2 adds the per-issue deep analysis. Both
+// decode, so links made before v2 keep working.
+const SHARE_VERSION = 2;
 const SHARE_PARAM = 'r';
 // Browsers handle far longer URLs, but chat apps and mail clients start
 // truncating well before this. Past the cap we copy the report text instead.
@@ -218,8 +220,9 @@ async function pipeThrough(transform, bytes) {
 
 // Prefixes mark the encoding so a link made in a gzip-capable browser still
 // decodes in one that lacks CompressionStream, and vice versa.
-async function encodeSharePayload(data, rpMode) {
+async function encodeSharePayload(data, rpMode, deepDives) {
   const payload = { v: SHARE_VERSION, m: rpMode ? 'rp' : 'real', d: data };
+  if (deepDives && deepDives.size) payload.dd = Object.fromEntries(deepDives);
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
 
   if (typeof CompressionStream === 'function') {
@@ -255,16 +258,35 @@ async function decodeSharePayload(token) {
     throw new Error(TRUNCATED);
   }
 
-  if (!payload || payload.v !== SHARE_VERSION || !payload.d || !Array.isArray(payload.d.nodes)) {
+  if (!payload || !payload.d || !Array.isArray(payload.d.nodes) || payload.v > SHARE_VERSION) {
     throw new Error('This share link was made by a different version of LoopholeMap.');
   }
-  return { data: payload.d, rpMode: payload.m !== 'real' };
+  return {
+    data: payload.d,
+    rpMode: payload.m !== 'real',
+    deepDives: new Map(Object.entries(payload.dd || {}))
+  };
 }
 
-async function buildShareUrl(data, rpMode) {
-  const token = await encodeSharePayload(data, rpMode);
+/**
+ * Builds the shareable URL, preferring the richer payload.
+ * Deep analysis roughly triples the payload, so if the full link would be too
+ * long to survive being pasted around, fall back to a scan-only link rather
+ * than handing out one that arrives truncated.
+ * Returns { url, includedDeepDives } or null when even the slim link is too big.
+ */
+async function buildShareUrl(data, rpMode, deepDives) {
   const base = `${location.origin}${location.pathname}`;
-  return `${base}#${SHARE_PARAM}=${token}`;
+  const toUrl = (token) => `${base}#${SHARE_PARAM}=${token}`;
+
+  if (deepDives && deepDives.size) {
+    const full = toUrl(await encodeSharePayload(data, rpMode, deepDives));
+    if (full.length <= MAX_SHARE_URL_CHARS) return { url: full, includedDeepDives: true };
+  }
+
+  const slim = toUrl(await encodeSharePayload(data, rpMode, null));
+  if (slim.length <= MAX_SHARE_URL_CHARS) return { url: slim, includedDeepDives: false };
+  return null;
 }
 
 // Returns the token from the current URL fragment, or null.

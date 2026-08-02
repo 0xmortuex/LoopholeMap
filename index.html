@@ -78,6 +78,25 @@
           <span class="scan-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to scan</span>
         </section>
 
+        <section class="rail-section rail-collapsible collapsed" id="history-section" hidden>
+          <div class="rail-section-header-row">
+            <button class="rail-section-header" data-collapse-target="history-body">
+              <span>Recent Scans</span>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="rail-section-actions">
+              <button type="button" class="icon-btn" id="clear-history-btn" title="Clear all history" aria-label="Clear all history">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="rail-section-body" id="history-body">
+            <div class="history-list" id="history-list"></div>
+          </div>
+        </section>
+
         <section class="rail-section rail-collapsible" id="risk-section" hidden>
           <button class="rail-section-header" data-collapse-target="risk-body">
             <span>Risk Overview</span>

@@ -38,6 +38,7 @@ let overallContext = '';
 let chatMessages = [];
 let activeTab = 'detail';
 let onJumpToNode = null;
+let onDeepDiveLoaded = null;
 
 function $(id) { return document.getElementById(id); }
 
@@ -47,6 +48,7 @@ function initPanel(nodes, connections, callbacks = {}) {
   currentNode = null;
   chatMessages = [];
   onJumpToNode = callbacks.onJumpToNode || null;
+  onDeepDiveLoaded = callbacks.onDeepDiveLoaded || null;
   // Node IDs (n1, n2, …) restart at 1 for every analysis, so a cache carried
   // over from a previous scan would serve the wrong bill's deep dive.
   deepDiveCache.clear();
@@ -234,6 +236,7 @@ async function fetchDeepDive(node) {
     const raw = await getNodeDetail(node);
     const detail = parseDetailResponse(raw);
     deepDiveCache.set(node.id, detail);
+    if (onDeepDiveLoaded) onDeepDiveLoaded(node.id, detail);
     if (currentNode && currentNode.id === node.id) renderDeepDive(detail);
   } catch (err) {
     if (currentNode && currentNode.id === node.id) {
@@ -435,6 +438,22 @@ function hasDeepDive(nodeId) {
   return deepDiveCache.has(nodeId);
 }
 
+// Returns a copy of every deep dive loaded for the current analysis, for
+// embedding in share links and history entries.
+function collectDeepDives() {
+  return new Map(deepDiveCache);
+}
+
+// Populates the cache from a share link or history entry so the detail panel
+// renders instantly without re-requesting anything. Call after initPanel,
+// which clears the cache.
+function seedDeepDives(entries) {
+  if (!entries) return;
+  entries.forEach((detail, nodeId) => {
+    if (detail) deepDiveCache.set(nodeId, detail);
+  });
+}
+
 // Returns the cached deep dive, fetching and caching it if needed. Shares the
 // cache with the detail panel, so a node opened in the UI is never re-fetched.
 async function ensureDeepDive(node) {
@@ -450,5 +469,5 @@ function clearDeepDiveCache() {
 
 export {
   initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel,
-  hasDeepDive, ensureDeepDive, clearDeepDiveCache
+  hasDeepDive, ensureDeepDive, clearDeepDiveCache, collectDeepDives, seedDeepDives
 };

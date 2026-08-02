@@ -6,12 +6,15 @@ import {
 } from './board.js';
 import {
   initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel,
-  hasDeepDive, ensureDeepDive
+  hasDeepDive, ensureDeepDive, collectDeepDives, seedDeepDives
 } from './panel.js';
+import {
+  listHistory, saveToHistory, loadHistoryEntry, deleteHistoryEntry, clearHistory, formatWhen
+} from './history.js';
 import { SAMPLE_REGULATION } from './samples.js';
 import {
   buildIssuesReport, copyText, buildShareUrl, decodeSharePayload,
-  readShareToken, clearShareToken, MAX_SHARE_URL_CHARS
+  readShareToken, clearShareToken
 } from './share.js';
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -27,6 +30,9 @@ let activeTypeFilters = new Set();
 let gaugePathLength = null;
 // Mode selected in the toggle (applies to the NEXT scan)…
 let analysisMode = localStorage.getItem(MODE_KEY) === 'real' ? 'real' : 'rp';
+// History entry currently on the board, so it can be highlighted and kept
+// up to date as deep dives load.
+let activeHistoryId = null;
 // …vs. the mode of the scan currently shown on the board, which drives the
 // legend and filters so flipping the toggle doesn't relabel existing results.
 let boardRpMode = analysisMode === 'rp';
@@ -44,11 +50,13 @@ function init() {
   wireCollapsibles();
   wireAskFab();
   wireResultActions();
+  wireHistory();
 
   initPanel([], [], { onJumpToNode: (id) => centerOnNode(id) });
 
   window._showToast = showToast;
 
+  renderHistory();
   restoreSharedAnalysis();
   // Pasting a share link into the address bar while already on the site only
   // changes the fragment — no reload, so DOMContentLoaded never fires again.
@@ -62,13 +70,20 @@ async function restoreSharedAnalysis() {
   if (!token) return;
 
   try {
-    const { data, rpMode } = await decodeSharePayload(token);
+    const { data, rpMode, deepDives } = await decodeSharePayload(token);
     analysisData = data;
     boardRpMode = rpMode;
     setReferenceMode(rpMode);
     showGraphView(data);
+    // initPanel (inside showGraphView) clears the cache, so seed afterwards.
+    seedDeepDives(deepDives);
+    activeHistoryId = saveToHistory(data, rpMode, deepDives);
+    renderHistory();
     $('shared-banner').hidden = false;
-    showToast('Opened a shared analysis', 'info');
+    showToast(
+      deepDives.size ? 'Opened a shared analysis (with deep analysis)' : 'Opened a shared analysis',
+      'info'
+    );
   } catch (err) {
     // A truncated or hand-edited link shouldn't leave a dead fragment behind.
     clearShareToken();
@@ -337,6 +352,8 @@ async function startScan(text) {
     clearShareToken();
     ScanProgress.succeed();
     showGraphView(analysisData);
+    activeHistoryId = saveToHistory(analysisData, rpMode, null);
+    renderHistory();
     showScanResultToast(analysisData);
   } catch (err) {
     ScanProgress.fail();
@@ -404,7 +421,10 @@ function showGraphView(data) {
     $(id).hidden = false;
   });
 
-  initPanel(data.nodes, data.connections, { onJumpToNode: (id) => centerOnNode(id) });
+  initPanel(data.nodes, data.connections, {
+    onJumpToNode: (id) => centerOnNode(id),
+    onDeepDiveLoaded: scheduleHistorySync
+  });
   setOverallContext(buildOverallContextText(data));
 
   $('ask-fab').hidden = false;
@@ -614,6 +634,100 @@ function wireAskFab() {
   $('ask-fab').addEventListener('click', () => openChatGeneral());
 }
 
+/* ===== Recent scans (history) ===== */
+
+function wireHistory() {
+  $('clear-history-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearHistory();
+    activeHistoryId = null;
+    renderHistory();
+    showToast('History cleared', 'info');
+  });
+}
+
+function renderHistory() {
+  const section = $('history-section');
+  const list = $('history-list');
+  const entries = listHistory();
+
+  section.hidden = entries.length === 0;
+  if (!entries.length) { list.innerHTML = ''; return; }
+
+  list.innerHTML = entries.map(e => `
+    <div class="history-item${e.id === activeHistoryId ? ' active' : ''}" data-id="${e.id}" role="button" tabindex="0">
+      <span class="history-risk-dot" style="background: ${SEVERITY_COLORS[e.risk] || '#64748b'}; color: ${SEVERITY_COLORS[e.risk] || '#64748b'}"></span>
+      <span class="history-main">
+        <span class="history-title">${escapeHtml(e.title)}</span>
+        <span class="history-meta">${formatWhen(e.savedAt)} · ${e.nodeCount} issue${e.nodeCount === 1 ? '' : 's'} · ${e.rpMode ? 'RP' : 'Real'}${e.hasDeepDives ? ' · deep' : ''}</span>
+      </span>
+      <button type="button" class="history-delete" data-delete="${e.id}" title="Remove from history" aria-label="Remove from history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.history-item').forEach(item => {
+    const open = () => openHistoryEntry(item.dataset.id);
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('[data-delete]')) return;
+      open();
+    });
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+
+  list.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.delete;
+      deleteHistoryEntry(id);
+      if (id === activeHistoryId) activeHistoryId = null;
+      renderHistory();
+    });
+  });
+}
+
+function openHistoryEntry(id) {
+  const entry = loadHistoryEntry(id);
+  if (!entry) {
+    showToast('That scan is no longer in history', 'error');
+    renderHistory();
+    return;
+  }
+
+  analysisData = entry.data;
+  boardRpMode = entry.rpMode;
+  setReferenceMode(entry.rpMode);
+  activeHistoryId = id;
+
+  showGraphView(entry.data);
+  seedDeepDives(entry.deepDives);   // after showGraphView: initPanel clears the cache
+  $('shared-banner').hidden = true;
+  clearShareToken();
+  renderHistory();
+  showToast(`Reopened “${entry.data.title}”`, 'info');
+}
+
+// Deep dives loaded after a scan (by opening cards, copying, or sharing) are
+// worth persisting so reopening from history keeps them.
+function syncHistoryDeepDives() {
+  if (!analysisData) return;
+  const dives = collectDeepDives();
+  if (!dives.size) return;
+  activeHistoryId = saveToHistory(analysisData, isRpLegalMode(), dives);
+  renderHistory();
+}
+
+// Card clicks can load several deep dives in quick succession; coalesce the
+// localStorage writes.
+let historySyncTimer = null;
+function scheduleHistorySync() {
+  clearTimeout(historySyncTimer);
+  historySyncTimer = setTimeout(syncHistoryDeepDives, 800);
+}
+
 /* ===== Copy / Share ===== */
 
 function flashCopied(btn) {
@@ -669,6 +783,8 @@ function wireResultActions() {
       copyBtn.classList.remove('busy');
     }
 
+    syncHistoryDeepDives();
+
     const report = buildIssuesReport(analysisData, isRpLegalMode(), deepDives);
     if (!(await copyText(report))) {
       showToast('Could not access the clipboard — copy blocked by the browser', 'error');
@@ -686,28 +802,50 @@ function wireResultActions() {
   });
 
   shareBtn.addEventListener('click', async () => {
-    if (!analysisData) return;
-    shareBtn.disabled = true;
-    try {
-      const url = await buildShareUrl(analysisData, isRpLegalMode());
+    if (!analysisData || shareBtn.disabled) return;
+    const nodes = analysisData.nodes;
+    const missing = nodes.filter(n => !hasDeepDive(n.id));
+    const deepDives = new Map();
 
-      // Very large analyses make links that chat apps and mail clients
-      // truncate, so fall back to the plain-text report instead of handing
-      // out a link that will arrive broken.
-      if (url.length > MAX_SHARE_URL_CHARS) {
-        const report = buildIssuesReport(analysisData, isRpLegalMode());
-        if (await copyText(report)) {
-          showToast('Analysis too large for a link — copied the full report instead', 'info');
-        } else {
-          showToast('Analysis too large to share as a link', 'error');
+    shareBtn.disabled = true;
+    if (missing.length) {
+      shareBtn.classList.add('busy');
+      showToast(
+        `Building share link — fetching deep analysis for ${missing.length} issue${missing.length === 1 ? '' : 's'}…`,
+        'info'
+      );
+    }
+
+    try {
+      // Embed the deep analysis so the recipient sees complete detail panels
+      // without spending their own requests re-deriving them.
+      await runPool(nodes, 3, async (node) => {
+        try {
+          deepDives.set(node.id, await ensureDeepDive(node));
+        } catch {
+          /* share the link without this one */
         }
+      });
+      syncHistoryDeepDives();
+
+      const built = await buildShareUrl(analysisData, isRpLegalMode(), deepDives);
+
+      // Even the slim link is too long to survive being pasted around.
+      if (!built) {
+        const report = buildIssuesReport(analysisData, isRpLegalMode(), deepDives);
+        showToast(
+          await copyText(report)
+            ? 'Analysis too large for a link — copied the full report instead'
+            : 'Analysis too large to share as a link',
+          'info'
+        );
         return;
       }
 
       // Mobile: hand off to the OS share sheet when available.
       if (navigator.share) {
         try {
-          await navigator.share({ title: `LoopholeMap — ${analysisData.title}`, url });
+          await navigator.share({ title: `LoopholeMap — ${analysisData.title}`, url: built.url });
           return;
         } catch (err) {
           if (err && err.name === 'AbortError') return; // user dismissed the sheet
@@ -715,9 +853,14 @@ function wireResultActions() {
         }
       }
 
-      if (await copyText(url)) {
+      if (await copyText(built.url)) {
         flashCopied(shareBtn);
-        showToast('Share link copied — anyone with it sees these results', 'success');
+        showToast(
+          built.includedDeepDives
+            ? 'Share link copied — includes the deep analysis'
+            : 'Share link copied (too large to include the deep analysis)',
+          built.includedDeepDives ? 'success' : 'info'
+        );
       } else {
         showToast('Could not access the clipboard — copy blocked by the browser', 'error');
       }
@@ -725,6 +868,7 @@ function wireResultActions() {
       showToast(err.message || 'Could not build a share link', 'error');
     } finally {
       shareBtn.disabled = false;
+      shareBtn.classList.remove('busy');
     }
   });
 }
