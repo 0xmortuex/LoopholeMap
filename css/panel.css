@@ -10,7 +10,7 @@
   right: 0;
   bottom: 0;
   width: min(var(--panel-w), 100vw);
-  background: var(--bg-1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.014), transparent 140px), var(--bg-1);
   border-left: 1px solid var(--border);
   box-shadow: -16px 0 40px rgba(0,0,0,0.45);
   display: flex;

@@ -408,6 +408,7 @@ function renderGauge(riskLevel) {
   const color = SEVERITY_COLORS[riskLevel] || SEVERITY_COLORS.medium;
 
   fillPath.style.stroke = color;
+  fillPath.style.filter = `drop-shadow(0 0 6px ${color})`;
   fillPath.style.strokeDashoffset = `${gaugePathLength * (1 - fraction)}`;
 
   const angle = -90 + fraction * 180;

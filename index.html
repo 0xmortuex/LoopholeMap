@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LoopholeMap — Find the cracks in any regulation</title>
   <meta name="description" content="Interactive visual tool that finds loopholes, exemptions, and gray areas in any regulation or law.">
+  <meta name="theme-color" content="#07080d">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="LoopholeMap — Find the cracks in any regulation">
+  <meta property="og:description" content="Paste any bill, law, or policy and get an interactive evidence board of its loopholes, gray areas, and conflicts.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,16 +134,26 @@
     <main class="canvas-area">
       <div class="graph-canvas" id="graph-canvas">
         <div class="empty-state" id="empty-state">
-          <svg viewBox="0 0 64 64" fill="none" class="empty-state-icon">
-            <rect x="14" y="8" width="28" height="36" rx="3" stroke="#334155" stroke-width="2.5" fill="none"/>
-            <circle cx="42" cy="42" r="12" stroke="#334155" stroke-width="3" fill="none"/>
-            <line x1="50.5" y1="50.5" x2="58" y2="58" stroke="#334155" stroke-width="3.5" stroke-linecap="round"/>
-          </svg>
-          <p>Paste a regulation on the left and scan it to map its loopholes.</p>
+          <div class="empty-visual" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" class="empty-state-icon">
+              <rect x="14" y="8" width="28" height="36" rx="3" stroke="#3d465c" stroke-width="2.5" fill="rgba(13,15,22,0.6)"/>
+              <line x1="20" y1="17" x2="36" y2="17" stroke="#2a3145" stroke-width="2" stroke-linecap="round"/>
+              <line x1="20" y1="23" x2="34" y2="23" stroke="#2a3145" stroke-width="2" stroke-linecap="round"/>
+              <line x1="20" y1="29" x2="30" y2="29" stroke="#2a3145" stroke-width="2" stroke-linecap="round"/>
+              <path class="empty-crack" d="M28 8 L31 16 L27 22 L32 30 L29 38" stroke="#ef4444" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+              <circle cx="42" cy="42" r="12" stroke="#3d465c" stroke-width="3" fill="rgba(13,15,22,0.75)"/>
+              <line x1="50.5" y1="50.5" x2="58" y2="58" stroke="#3d465c" stroke-width="3.5" stroke-linecap="round"/>
+            </svg>
+            <span class="empty-scanline"></span>
+          </div>
+          <h1 class="empty-headline">Find the cracks <em>before they do.</em></h1>
+          <p class="empty-sub">Paste a bill, law, or policy and scan it. LoopholeMap charts every loophole, gray area, and conflict on an interactive evidence board.</p>
+          <span class="empty-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to scan</span>
         </div>
       </div>
 
       <div class="scan-progress" id="scan-progress" hidden aria-live="polite">
+        <div class="scan-beam" aria-hidden="true"></div>
         <div class="scan-progress-inner">
           <div class="scan-progress-phase" id="scan-progress-phase">Reading the bill…</div>
           <div class="scan-progress-track">

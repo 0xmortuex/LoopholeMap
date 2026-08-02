@@ -61,13 +61,38 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.06), transparent),
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size: auto, 42px 42px, 42px 42px;
+    radial-gradient(ellipse 70% 45% at 18% -8%, rgba(239, 68, 68, 0.05), transparent),
+    radial-gradient(ellipse 80% 50% at 75% -10%, rgba(99, 102, 241, 0.07), transparent),
+    radial-gradient(ellipse 90% 70% at 50% 115%, rgba(99, 102, 241, 0.04), transparent),
+    linear-gradient(rgba(255,255,255,0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.016) 1px, transparent 1px);
+  background-size: auto, auto, auto, 42px 42px, 42px 42px;
+}
+
+/* Film-grain overlay: kills the flat "big solid rectangles" look. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 ::selection { background: var(--accent-soft); color: var(--text); }
+
+/* Custom scrollbars — the stock ones break the console aesthetic. */
+* { scrollbar-width: thin; scrollbar-color: var(--bg-3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--bg-3);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--border); }
 
 button {
   font-family: inherit;
@@ -95,6 +120,14 @@ textarea:focus-visible,
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 40;
+}
+/* Red signal hairline along the very top edge — the app's "record light". */
+.app-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(239,68,68,0.25) 30%, transparent 60%);
 }
 
 .header-left, .header-right {
@@ -303,9 +336,17 @@ textarea:focus-visible,
 .rail-section-body > * { overflow: hidden; min-height: 0; }
 
 .tagline {
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   color: var(--text-faint);
   margin: 0 0 10px;
+}
+.tagline::before {
+  content: '// ';
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .mode-toggle {
@@ -335,6 +376,11 @@ textarea:focus-visible,
   color: #fff;
   box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
 }
+/* Real-world mode gets the red channel so the active mode reads at a glance. */
+.mode-toggle-btn.active[data-mode="real"] {
+  background: var(--accent);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+}
 
 .input-textarea {
   width: 100%;
@@ -351,7 +397,11 @@ textarea:focus-visible,
   resize: vertical;
   transition: border-color var(--dur-fast) var(--ease-out);
 }
-.input-textarea:focus { border-color: var(--accent-2); outline: none; }
+.input-textarea:focus {
+  border-color: var(--accent-2);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
 .input-textarea.scanning { opacity: 0.55; pointer-events: none; }
 
 .input-meta {
@@ -389,10 +439,16 @@ textarea:focus-visible,
 .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, #f25555, #dc2f2f);
   color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px rgba(239,68,68,0.22);
 }
-.btn-primary:hover { background: #f65b5b; box-shadow: 0 0 0 3px var(--accent-soft); }
+.btn-primary:hover {
+  background: linear-gradient(180deg, #f76a6a, #e53939);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 20px rgba(239,68,68,0.35), 0 0 0 3px var(--accent-soft);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: scale(0.97); }
 
 .btn-secondary {
   background: var(--bg-3);
@@ -617,6 +673,15 @@ textarea:focus-visible,
   overflow: hidden;
   background: radial-gradient(ellipse 60% 60% at 50% 45%, rgba(255,255,255,0.02), transparent);
 }
+/* Soft vignette so the board feels lit from the center. */
+.canvas-area::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 140px rgba(0, 0, 0, 0.42);
+  z-index: 3;
+}
 
 .empty-state {
   position: absolute;
@@ -625,14 +690,115 @@ textarea:focus-visible,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 0;
   color: var(--text-faint);
   text-align: center;
   padding: 0 40px;
   pointer-events: none;
 }
-.empty-state-icon { width: 56px; height: 56px; opacity: 0.5; }
-.empty-state p { font-size: 13px; max-width: 320px; margin: 0; }
+.empty-state > * {
+  animation: emptyRise 700ms var(--ease-out) both;
+}
+.empty-state > *:nth-child(2) { animation-delay: 90ms; }
+.empty-state > *:nth-child(3) { animation-delay: 180ms; }
+.empty-state > *:nth-child(4) { animation-delay: 270ms; }
+@keyframes emptyRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.empty-visual {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 22px;
+  animation-name: emptyRise;
+}
+.empty-state-icon {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.5));
+}
+.empty-crack {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: crackDraw 2.6s var(--ease-out) 900ms infinite;
+  filter: drop-shadow(0 0 4px rgba(239,68,68,0.6));
+}
+@keyframes crackDraw {
+  0%       { stroke-dashoffset: 60; opacity: 0; }
+  18%      { opacity: 1; }
+  55%      { stroke-dashoffset: 0; opacity: 1; }
+  82%      { stroke-dashoffset: 0; opacity: 1; }
+  100%     { stroke-dashoffset: 0; opacity: 0; }
+}
+.empty-scanline {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(239,68,68,0.7), transparent);
+  box-shadow: 0 0 14px 2px rgba(239,68,68,0.35);
+  animation: emptyScan 2.6s var(--ease-in-out) 900ms infinite;
+}
+@keyframes emptyScan {
+  0%   { transform: translateY(4px); opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { transform: translateY(88px); opacity: 1; }
+  70%  { opacity: 0; }
+  100% { transform: translateY(88px); opacity: 0; }
+}
+
+.empty-headline {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  color: var(--text);
+  margin: 0 0 12px;
+  max-width: 520px;
+}
+.empty-headline em {
+  font-style: normal;
+  color: var(--accent);
+  position: relative;
+  white-space: nowrap;
+}
+.empty-headline em::after {
+  content: '';
+  position: absolute;
+  left: 2px; right: 2px;
+  bottom: -3px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(239,68,68,0.85), rgba(239,68,68,0.15));
+  transform: skewX(-12deg);
+}
+.empty-sub {
+  font-size: 13.5px;
+  line-height: 1.65;
+  max-width: 420px;
+  margin: 0 0 18px;
+  color: var(--text-dim);
+}
+.empty-hint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+  color: var(--text-faint);
+}
+.empty-hint kbd {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
 .ask-fab {
   position: absolute;
@@ -667,13 +833,42 @@ textarea:focus-visible,
   pointer-events: none;
 }
 .scan-progress[hidden] { display: none; }
+
+/* Red beam sweeping the whole canvas while the scan runs. */
+.scan-beam {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scan-beam::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 4%, rgba(239,68,68,0.5), transparent 96%);
+  box-shadow: 0 0 22px 5px rgba(239,68,68,0.18);
+  animation: beamSweep 3.2s var(--ease-in-out) infinite;
+}
+@keyframes beamSweep {
+  0%   { transform: translateY(4vh); opacity: 0; }
+  8%   { opacity: 1; }
+  46%  { transform: translateY(88vh); opacity: 1; }
+  54%  { opacity: 0; }
+  62%  { transform: translateY(4vh); opacity: 0; }
+  70%  { opacity: 1; }
+  100% { transform: translateY(88vh); opacity: 0; }
+}
+
 .scan-progress-inner {
   width: min(460px, 80%);
-  background: var(--bg-2);
-  border: 1px solid var(--border-soft);
+  background: rgba(18, 20, 29, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 22px 24px;
-  box-shadow: 0 18px 44px rgba(0,0,0,0.5);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 0 0 1px rgba(239,68,68,0.07), 0 0 44px rgba(239,68,68,0.06);
 }
 .scan-progress-phase {
   font-size: 13.5px;
@@ -683,6 +878,7 @@ textarea:focus-visible,
   min-height: 18px;
 }
 .scan-progress-track {
+  position: relative;
   height: 8px;
   background: var(--bg);
   border: 1px solid var(--border-soft);
@@ -696,6 +892,21 @@ textarea:focus-visible,
   transform-origin: left center;
   background: linear-gradient(90deg, var(--accent-2), var(--accent));
   border-radius: 999px;
+}
+/* Shimmer that rides on top of the fill (kept off the scaled element so it
+   doesn't stretch with the scaleX). */
+.scan-progress-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: trackShimmer 1.6s linear infinite;
+  mix-blend-mode: overlay;
+}
+@keyframes trackShimmer {
+  from { background-position: 160% 0; }
+  to   { background-position: -60% 0; }
 }
 .scan-progress-meta {
   display: flex;
@@ -725,8 +936,10 @@ textarea:focus-visible,
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-2);
+  background: rgba(18, 20, 29, 0.92);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
+  border-left-width: 3px;
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-size: 12.5px;
@@ -736,10 +949,11 @@ textarea:focus-visible,
 .toast.removing { animation: toastOut var(--dur-base) var(--ease-in-out) forwards; }
 .toast-icon { width: 15px; height: 15px; flex-shrink: 0; }
 .toast-icon svg { width: 100%; height: 100%; }
-.toast.success { border-color: rgba(34,197,94,0.4); }
+.toast.success { border-left-color: var(--accent-green); }
 .toast.success .toast-icon { color: var(--accent-green); }
-.toast.error { border-color: rgba(239,68,68,0.4); }
+.toast.error { border-left-color: var(--sev-critical); }
 .toast.error .toast-icon { color: var(--sev-critical); }
+.toast.info { border-left-color: var(--accent-2); }
 .toast.info .toast-icon { color: var(--accent-2); }
 
 @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -767,6 +981,7 @@ textarea:focus-visible,
   .left-rail.collapsed { margin-left: calc(var(--rail-w) * -1); }
 
   .reg-title { display: none; }
+  .empty-hint { display: none; }
 }
 
 @media (max-width: 560px) {
