@@ -62,20 +62,97 @@ async function postToProxy(body) {
   return data.result;
 }
 
-async function analyzeRegulation(text) {
-  checkInputLength(text);
-  const rpLegalRequest = await buildRpLegalAnalysisText(text, {
-    maxTotalChars: MAX_REQUEST_CHARS
-  });
+// Whether follow-up requests (node detail, Ask AI) should reason against the
+// RP legal references. Set from the mode of the most recent successful scan so
+// detail/chat always match the board they describe.
+let rpReferenceMode = true;
 
-  return postToProxy({
-    action: 'analyze',
-    text: rpLegalRequest.text,
-    rpLegalContext: rpLegalRequest.metadata
-  });
+const REAL_WORLD_MODE_NOTE =
+  'REAL-WORLD LEGAL ANALYSIS MODE: treat this as real-life law or policy in its actual jurisdiction, not a role-play or game scenario. ' +
+  'Do not reference any RP Constitution, RP Code of Justice, Ownership Team, or other fictional legal sources. ' +
+  'Cite real statutes, constitutional provisions, or case law only when you are confident they exist; if unsure, describe the legal principle instead of inventing a citation.';
+
+function buildRealWorldAnalysisText(billText) {
+  const trimmedBill = billText.trim();
+  const requestText = [
+    'REAL-WORLD LEGAL ANALYSIS MODE',
+    '',
+    'Analyze ONLY the proposed bill/regulation in the final section. Treat it as real-life law or policy in its actual jurisdiction — this is NOT a role-play or game scenario.',
+    'Do not reference any RP Constitution, RP Code of Justice, Ownership Team, or other fictional legal sources.',
+    '',
+    'Classify issues with the standard types (loophole, exemption, gray-area, contradiction, missing-definition, weak-enforcement, scope-gap, sunset-clause). Two additional types apply to real-world constitutional questions:',
+    '- constitutional-conflict: the proposal likely conflicts with the constitution of its jurisdiction or exceeds constitutional authority. Use only when confident about the real constitutional provision involved.',
+    '- requires-amendment: the goal appears achievable only through a constitutional amendment. Use only when confident.',
+    'Never use the type coj-inconsistency; it refers to a fictional legal code that does not apply here.',
+    '',
+    'For every node, include these JSON fields:',
+    '- possibility: how likely the issue is to actually arise in practice. Use exactly one of: very-low, low, medium, high, very-high.',
+    '- difficulty: how hard it would be for someone to exploit or trigger the issue. Use exactly one of: easy, moderate, hard, very-hard.',
+    '- effectiveness: if the loophole/issue is actually used, how effective it would be at achieving the exploit or defeating the law\'s intent. Use exactly one of: very-low, low, medium, high, very-high.',
+    '- importance: how important this issue is for lawmakers to address. Use exactly one of: very-low, low, medium, high, very-high.',
+    'Do not confuse severity with possibility. A severe issue can still have very-low possibility if it is unlikely to occur.',
+    '',
+    'For each node, cite the bill/regulation section that creates the issue. When referencing real statutes, constitutional provisions, or case law, cite only sources you are confident exist; if unsure, describe the legal principle instead of inventing a citation.',
+    '',
+    'PROPOSED BILL / REGULATION TO SCAN',
+    trimmedBill
+  ].join('\n');
+
+  if (requestText.length > MAX_REQUEST_CHARS) {
+    throw new Error(
+      `The scan request is too long (${requestText.length.toLocaleString()} characters, ` +
+      `limit is ${MAX_REQUEST_CHARS.toLocaleString()}). Please trim the text and try again.`
+    );
+  }
+
+  return requestText;
+}
+
+async function analyzeRegulation(text, rpMode = true) {
+  checkInputLength(text);
+
+  let body;
+  if (rpMode) {
+    const rpLegalRequest = await buildRpLegalAnalysisText(text, {
+      maxTotalChars: MAX_REQUEST_CHARS
+    });
+    body = {
+      action: 'analyze',
+      text: rpLegalRequest.text,
+      rpLegalContext: rpLegalRequest.metadata
+    };
+  } else {
+    body = {
+      action: 'analyze',
+      text: buildRealWorldAnalysisText(text)
+    };
+  }
+
+  const result = await postToProxy(body);
+  rpReferenceMode = rpMode;
+  return result;
 }
 
 async function getNodeDetail(nodeData) {
+  const baseNode = {
+    title: nodeData.title,
+    section: nodeData.section,
+    type: nodeData.type,
+    severity: nodeData.severity,
+    possibility: nodeData.possibility,
+    difficulty: nodeData.difficulty
+  };
+
+  if (!rpReferenceMode) {
+    return postToProxy({
+      action: 'detail',
+      nodeData: {
+        ...baseNode,
+        description: [nodeData.description, '', REAL_WORLD_MODE_NOTE].join('\n')
+      }
+    });
+  }
+
   const referenceContext = await buildRpLegalReferenceContext(
     `${nodeData.title}\n${nodeData.section || ''}\n${nodeData.type}\n${nodeData.description || ''}`,
     { maxChars: 7000 }
@@ -84,12 +161,7 @@ async function getNodeDetail(nodeData) {
   return postToProxy({
     action: 'detail',
     nodeData: {
-      title: nodeData.title,
-      section: nodeData.section,
-      type: nodeData.type,
-      severity: nodeData.severity,
-      possibility: nodeData.possibility,
-      difficulty: nodeData.difficulty,
+      ...baseNode,
       description: [
         nodeData.description,
         '',
@@ -102,6 +174,15 @@ async function getNodeDetail(nodeData) {
 }
 
 async function askAI(contextType, contextData, question) {
+  if (!rpReferenceMode) {
+    return postToProxy({
+      action: 'ask',
+      contextType,
+      contextData: [contextData, '', REAL_WORLD_MODE_NOTE].join('\n'),
+      question
+    });
+  }
+
   const referenceContext = await buildRpLegalReferenceContext(
     `${contextData}\n${question}`,
     { maxChars: 7000 }

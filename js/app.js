@@ -5,28 +5,34 @@ import {
   TYPE_COLORS, TYPE_GLYPHS, SEVERITY_COLORS
 } from './board.js';
 import { initPanel, setOverallContext, openNodeDetail, openChatGeneral, closePanel } from './panel.js';
-import { RP_LEGAL_REFERENCES_ENABLED } from './rpLaw.js';
 import { SAMPLE_REGULATION } from './samples.js';
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
-const CUSA_TYPES = new Set(['constitutional-conflict', 'coj-inconsistency', 'requires-amendment']);
+// Issue types that only make sense against the RP legal corpus.
+// constitutional-conflict and requires-amendment stay available in real-world
+// mode (real constitutions exist); the Code of Justice is RP-only.
+const RP_ONLY_TYPES = new Set(['coj-inconsistency']);
+const MODE_KEY = 'loopholemap_analysis_mode';
 
 let analysisData = null;
 let activeSeverityFilters = new Set();
 let activeTypeFilters = new Set();
 let gaugePathLength = null;
+// Mode selected in the toggle (applies to the NEXT scan)…
+let analysisMode = localStorage.getItem(MODE_KEY) === 'real' ? 'real' : 'rp';
+// …vs. the mode of the scan currently shown on the board, which drives the
+// legend and filters so flipping the toggle doesn't relabel existing results.
+let boardRpMode = analysisMode === 'rp';
 
 function $(id) { return document.getElementById(id); }
 
 function isRpLegalMode() {
-  // The RP Constitution + Code of Justice are always loaded and injected by the
-  // frontend now, so the RP legal issue types are always available. (The old
-  // secret "private reference mode" has been removed.)
-  return RP_LEGAL_REFERENCES_ENABLED;
+  return boardRpMode;
 }
 
 function init() {
   wireScanSection();
+  wireModeToggle();
   wireRailToggle();
   wireCollapsibles();
   wireAskFab();
@@ -74,6 +80,36 @@ function wireScanSection() {
   });
 }
 
+function wireModeToggle() {
+  const buttons = document.querySelectorAll('.mode-toggle-btn');
+
+  const applyActiveState = () => {
+    buttons.forEach(b => {
+      const active = b.dataset.mode === analysisMode;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+  };
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      if (mode === analysisMode) return;
+      analysisMode = mode;
+      localStorage.setItem(MODE_KEY, mode);
+      applyActiveState();
+      showToast(
+        mode === 'rp'
+          ? 'CUSA / RP mode — next scan checks against the RP Constitution & Code of Justice'
+          : 'Real-world mode — next scan analyzes the text as real-life law',
+        'info'
+      );
+    });
+  });
+
+  applyActiveState();
+}
+
 function attachRipple(button) {
   button.addEventListener('click', (e) => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -109,12 +145,19 @@ function attachRipple(button) {
 const ScanProgress = (() => {
   const DEFAULT_ESTIMATE_MS = 55000;
   const EST_KEY = 'loopholemap_scan_estimate_ms';
-  const PHASES = [
+  const RP_PHASES = [
     { at: 0.00, label: 'Reading the bill…' },
     { at: 0.22, label: 'Cross-referencing the Constitution & Code of Justice…' },
     { at: 0.55, label: 'Scoring severity, possibility & difficulty…' },
     { at: 0.82, label: 'Assembling the board…' }
   ];
+  const REAL_PHASES = [
+    { at: 0.00, label: 'Reading the text…' },
+    { at: 0.22, label: 'Probing definitions, scope & enforcement…' },
+    { at: 0.55, label: 'Scoring severity, possibility & difficulty…' },
+    { at: 0.82, label: 'Assembling the board…' }
+  ];
+  let PHASES = RP_PHASES;
 
   let rafId = null;
   let startTs = 0;
@@ -167,7 +210,8 @@ const ScanProgress = (() => {
     rafId = requestAnimationFrame(tick);
   }
 
-  function start() {
+  function start(rpMode = true) {
+    PHASES = rpMode ? RP_PHASES : REAL_PHASES;
     running = true;
     startTs = Date.now();
     estimate = loadEstimate();
@@ -242,14 +286,18 @@ async function startScan(text) {
   const scanBtn = $('scan-btn');
   const textarea = $('regulation-input');
 
+  const rpMode = analysisMode === 'rp';
+
   scanBtn.disabled = true;
   textarea.classList.add('scanning');
   scanBtn.innerHTML = scanBtnMarkup('Scanning…');
-  ScanProgress.start();
+  ScanProgress.start(rpMode);
 
   try {
-    const raw = await analyzeRegulation(text);
+    const raw = await analyzeRegulation(text, rpMode);
     analysisData = parseAnalysisResponse(raw);
+    if (!rpMode) remapRpOnlyTypes(analysisData);
+    boardRpMode = rpMode;
     ScanProgress.succeed();
     showGraphView(analysisData);
     showScanResultToast(analysisData);
@@ -261,6 +309,15 @@ async function startScan(text) {
     scanBtn.innerHTML = SCAN_ICON_MARKUP;
     textarea.classList.remove('scanning');
   }
+}
+
+// In real-world mode the prompt forbids coj-inconsistency, but if the model
+// emits it anyway, fold it into the closest generic type so the board,
+// filters, and legend stay consistent.
+function remapRpOnlyTypes(data) {
+  data.nodes.forEach(n => {
+    if (RP_ONLY_TYPES.has(n.type)) n.type = 'contradiction';
+  });
 }
 
 function showScanResultToast(data) {
@@ -385,7 +442,7 @@ function renderFilters(nodes) {
   typeWrap.innerHTML = '';
   VALID_TYPES.forEach(type => {
     if (!typeCounts[type]) return;
-    if (CUSA_TYPES.has(type) && !cusa) return;
+    if (RP_ONLY_TYPES.has(type) && !cusa) return;
     const label = type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const chip = makeChip(label, typeCounts[type], TYPE_COLORS[type]);
     chip.addEventListener('click', () => toggleFilter(activeTypeFilters, type, chip));
@@ -432,7 +489,7 @@ function updateClearFiltersVisibility() {
 function renderLegend() {
   const container = $('legend-content');
   const cusa = isRpLegalMode();
-  const shownTypes = cusa ? VALID_TYPES : VALID_TYPES.filter(t => !CUSA_TYPES.has(t));
+  const shownTypes = cusa ? VALID_TYPES : VALID_TYPES.filter(t => !RP_ONLY_TYPES.has(t));
 
   const typeItems = shownTypes.map(t => {
     const label = t.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());

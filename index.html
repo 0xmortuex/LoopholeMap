@@ -46,6 +46,10 @@
 
         <section class="rail-section" id="scan-section">
           <p class="tagline">Find the cracks in any regulation</p>
+          <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Analysis mode">
+            <button type="button" class="mode-toggle-btn active" data-mode="rp" aria-pressed="true" title="Check bills against the RP Constitution, Code of Justice &amp; existing legislation">CUSA / RP Law</button>
+            <button type="button" class="mode-toggle-btn" data-mode="real" aria-pressed="false" title="Analyze as real-life law or policy — no RP legal references">Real-World Law</button>
+          </div>
           <textarea id="regulation-input" class="input-textarea" placeholder="Paste any regulation, law, or policy..." spellcheck="false"></textarea>
           <div class="input-meta">
             <span class="char-count" id="char-count"></span>

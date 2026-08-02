@@ -59,7 +59,7 @@ If a proposed fix changes constitutional structure or core rights, label it as `
 
 ## Runtime Note
 
-The browser app sends analysis requests through the Cloudflare Worker in `js/api.js`. Before analysis, the frontend loads `docs/rp-law/constitution.md`, `docs/rp-law/code-of-justice.md`, and `docs/rp-law/all-legislation.md`, selects relevant excerpts, and includes them with the pasted bill text. The request also includes `rpLegalContext` metadata for backends that explicitly support it.
+The browser app sends analysis requests through the Cloudflare Worker in `js/api.js`. The scan section has a mode toggle (persisted in `localStorage`): in CUSA / RP mode, the frontend loads `docs/rp-law/constitution.md`, `docs/rp-law/code-of-justice.md`, and `docs/rp-law/all-legislation.md`, selects relevant excerpts, and includes them with the pasted bill text, plus `rpLegalContext` metadata for backends that explicitly support it. In real-world mode, no RP references are loaded; the text is wrapped in a real-world analysis prompt that forbids `coj-inconsistency` (still allowing `constitutional-conflict` and `requires-amendment` against real constitutions), and node-detail / Ask AI requests follow the mode of the last successful scan.
 
 The repo does not currently contain the Worker source. If changing the backend prompt or corpus, keep the frontend JSON schema compatible with `js/parser.js`.
 
