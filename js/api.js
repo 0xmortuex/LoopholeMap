@@ -2,11 +2,12 @@ import { buildRpLegalAnalysisText, buildRpLegalReferenceContext } from './rpLaw.
 
 const PROXY_URL = 'https://loopholemap-proxy.mortuexhavoc.workers.dev';
 
-// The worker caps its analysis response at max_tokens: 8000. Keep the final
-// request compact enough to include RP legal excerpts and still return full
-// JSON.
-const MAX_REQUEST_CHARS = 24000;
-const MAX_INPUT_CHARS = 16000;
+// The worker caps its analysis response at max_tokens: 8000, which bounds how
+// many nodes come back — not how much text can go in. Input size is limited
+// mainly so the request finishes inside the ~100s edge timeout; the parser
+// tolerates truncated JSON if a huge bill produces an oversized response.
+const MAX_REQUEST_CHARS = 40000;
+const MAX_INPUT_CHARS = 32000;
 const WARN_INPUT_CHARS = Math.round(MAX_INPUT_CHARS * 0.85);
 
 // Analyses can be slow (large regulation + AI reasoning). Give it real
