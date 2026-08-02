@@ -233,6 +233,8 @@ textarea:focus-visible,
 }
 .reg-switcher-item:hover { background: var(--bg-3); border-color: var(--border-soft); }
 .reg-switcher-item.current { background: var(--bg-3); border-color: var(--accent-2); }
+/* Keyboard highlight (arrow keys), distinct from the current-scan border. */
+.reg-switcher-item.cursor { background: color-mix(in srgb, var(--accent-2) 18%, var(--bg-3)); }
 .reg-switcher-item .history-main { flex: 1; min-width: 0; }
 .reg-switcher-check {
   width: 14px; height: 14px;
@@ -519,8 +521,49 @@ textarea:focus-visible,
 .history-empty {
   font-size: 11.5px;
   color: var(--text-faint);
-  padding: 4px 2px;
+  padding: 8px 2px;
 }
+.history-match {
+  display: block;
+  font-size: 10.5px;
+  color: var(--accent-2);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Search box shared by the rail list and the switcher menu. */
+.scan-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 9px;
+  margin-bottom: 8px;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.scan-search[hidden] { display: none; }
+.scan-search:focus-within {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+.scan-search svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--text-faint); }
+.scan-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 8px 0;
+}
+.scan-search input::placeholder { color: var(--text-faint); }
+.scan-search input::-webkit-search-cancel-button { filter: grayscale(1) opacity(0.5); cursor: pointer; }
 
 /* Banner shown when viewing an analysis opened from a shared link. */
 .shared-banner {

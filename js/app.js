@@ -9,7 +9,8 @@ import {
   hasDeepDive, ensureDeepDive, collectDeepDives, seedDeepDives
 } from './panel.js';
 import {
-  listHistory, saveToHistory, loadHistoryEntry, deleteHistoryEntry, clearHistory, formatWhen
+  listHistory, searchHistory, saveToHistory, loadHistoryEntry, deleteHistoryEntry,
+  clearHistory, formatWhen
 } from './history.js';
 import { SAMPLE_REGULATION } from './samples.js';
 import {
@@ -33,6 +34,11 @@ let analysisMode = localStorage.getItem(MODE_KEY) === 'real' ? 'real' : 'rp';
 // History entry currently on the board, so it can be highlighted and kept
 // up to date as deep dives load.
 let activeHistoryId = null;
+// Search text for the rail list and the header switcher (kept separate so
+// filtering one doesn't disturb the other).
+let historyQuery = '';
+let switcherQuery = '';
+let switcherCursor = -1;   // keyboard-highlighted row in the switcher menu
 // …vs. the mode of the scan currently shown on the board, which drives the
 // legend and filters so flipping the toggle doesn't relabel existing results.
 let boardRpMode = analysisMode === 'rp';
@@ -651,7 +657,37 @@ function wireHistory() {
     showToast('History cleared', 'info');
   });
 
+  const search = $('history-search');
+  search.addEventListener('input', () => {
+    historyQuery = search.value;
+    renderHistory();
+  });
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && search.value) {
+      e.stopPropagation();
+      search.value = '';
+      historyQuery = '';
+      renderHistory();
+    }
+  });
+
   wireRegSwitcher();
+}
+
+// Row markup shared by the rail list and the switcher menu.
+function historyRowInner(entry) {
+  const meta = `${formatWhen(entry.savedAt)} · ${entry.nodeCount} issue${entry.nodeCount === 1 ? '' : 's'} · ${entry.rpMode ? 'RP' : 'Real'}${entry.hasDeepDives ? ' · deep' : ''}`;
+  const matched = entry.matchedIssue
+    ? `<span class="history-match">matches issue: ${escapeHtml(entry.matchedIssue)}</span>`
+    : '';
+  return `
+    <span class="history-risk-dot" style="background: ${SEVERITY_COLORS[entry.risk] || '#64748b'}; color: ${SEVERITY_COLORS[entry.risk] || '#64748b'}"></span>
+    <span class="history-main">
+      <span class="history-title">${escapeHtml(entry.title)}</span>
+      <span class="history-meta">${meta}</span>
+      ${matched}
+    </span>
+  `;
 }
 
 /* ===== Header regulation switcher ===== */
@@ -667,10 +703,24 @@ function closeRegSwitcher() {
 }
 
 function openRegSwitcher() {
+  switcherQuery = '';
+  switcherCursor = -1;
+  $('reg-switcher-search').value = '';
   renderRegSwitcherMenu();
   $('reg-switcher-menu').hidden = false;
   $('reg-switcher').classList.add('open');
   $('reg-switcher-btn').setAttribute('aria-expanded', 'true');
+  // Open straight into the search box so you can type a bill name and hit
+  // Enter without touching the mouse.
+  $('reg-switcher-search').focus();
+}
+
+function moveSwitcherCursor(delta) {
+  const rows = $('reg-switcher-list').querySelectorAll('.reg-switcher-item');
+  if (!rows.length) return;
+  switcherCursor = (switcherCursor + delta + rows.length) % rows.length;
+  rows.forEach((row, i) => row.classList.toggle('cursor', i === switcherCursor));
+  rows[switcherCursor].scrollIntoView({ block: 'nearest' });
 }
 
 function wireRegSwitcher() {
@@ -679,12 +729,34 @@ function wireRegSwitcher() {
     isSwitcherOpen() ? closeRegSwitcher() : openRegSwitcher();
   });
 
+  const search = $('reg-switcher-search');
+  search.addEventListener('input', () => {
+    switcherQuery = search.value;
+    switcherCursor = -1;
+    renderRegSwitcherMenu();
+  });
+
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveSwitcherCursor(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); moveSwitcherCursor(-1); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const rows = $('reg-switcher-list').querySelectorAll('.reg-switcher-item');
+      // Enter with nothing highlighted takes the top result.
+      const row = rows[switcherCursor >= 0 ? switcherCursor : 0];
+      if (row) row.click();
+    }
+  });
+
   document.addEventListener('click', (e) => {
     if (isSwitcherOpen() && !e.target.closest('#reg-switcher')) closeRegSwitcher();
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isSwitcherOpen()) closeRegSwitcher();
+    if (e.key === 'Escape' && isSwitcherOpen()) {
+      closeRegSwitcher();
+      $('reg-switcher-btn').focus();
+    }
   });
 }
 
@@ -698,30 +770,38 @@ function updateRegSwitcher() {
   if (isSwitcherOpen()) renderRegSwitcherMenu();
 }
 
+// Only the list is re-rendered so the search input keeps focus and caret.
 function renderRegSwitcherMenu() {
-  const menu = $('reg-switcher-menu');
+  const list = $('reg-switcher-list');
   const entries = listHistory();
+  const shown = searchHistory(entries, switcherQuery);
+
+  $('reg-switcher-search').parentElement.hidden = entries.length < 5 && !switcherQuery;
 
   if (!entries.length) {
-    menu.innerHTML = '<div class="history-empty">No other scans yet.</div>';
+    list.innerHTML = '<div class="history-empty">No other scans yet.</div>';
+    return;
+  }
+  if (!shown.length) {
+    list.innerHTML = `<div class="history-empty">No scans match “${escapeHtml(switcherQuery)}”.</div>`;
     return;
   }
 
-  menu.innerHTML = `
-    <div class="reg-switcher-menu-label">Switch regulation · ${entries.length} recent</div>
-    ${entries.map(e => `
-      <button type="button" class="reg-switcher-item${e.id === activeHistoryId ? ' current' : ''}" data-id="${e.id}" role="option" aria-selected="${e.id === activeHistoryId}">
-        <span class="history-risk-dot" style="background: ${SEVERITY_COLORS[e.risk] || '#64748b'}; color: ${SEVERITY_COLORS[e.risk] || '#64748b'}"></span>
-        <span class="history-main">
-          <span class="history-title">${escapeHtml(e.title)}</span>
-          <span class="history-meta">${formatWhen(e.savedAt)} · ${e.nodeCount} issue${e.nodeCount === 1 ? '' : 's'} · ${e.rpMode ? 'RP' : 'Real'}${e.hasDeepDives ? ' · deep' : ''}</span>
-        </span>
+  const label = switcherQuery
+    ? `${shown.length} match${shown.length === 1 ? '' : 'es'}`
+    : `Switch regulation · ${entries.length} recent`;
+
+  list.innerHTML = `
+    <div class="reg-switcher-menu-label">${escapeHtml(label)}</div>
+    ${shown.map((e, i) => `
+      <button type="button" class="reg-switcher-item${e.id === activeHistoryId ? ' current' : ''}${i === switcherCursor ? ' cursor' : ''}" data-id="${e.id}" role="option" aria-selected="${e.id === activeHistoryId}">
+        ${historyRowInner(e)}
         <svg class="reg-switcher-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
       </button>
     `).join('')}
   `;
 
-  menu.querySelectorAll('.reg-switcher-item').forEach(item => {
+  list.querySelectorAll('.reg-switcher-item').forEach(item => {
     item.addEventListener('click', () => {
       closeRegSwitcher();
       if (item.dataset.id !== activeHistoryId) openHistoryEntry(item.dataset.id);
@@ -736,15 +816,25 @@ function renderHistory() {
 
   updateRegSwitcher();
   section.hidden = entries.length === 0;
-  if (!entries.length) { list.innerHTML = ''; return; }
+  if (!entries.length) {
+    list.innerHTML = '';
+    $('history-search-wrap').hidden = true;
+    return;
+  }
 
-  list.innerHTML = entries.map(e => `
+  // The search box earns its space only once the list is long enough to
+  // need it.
+  $('history-search-wrap').hidden = entries.length < 5 && !historyQuery;
+
+  const shown = searchHistory(entries, historyQuery);
+  if (!shown.length) {
+    list.innerHTML = `<div class="history-empty">No scans match “${escapeHtml(historyQuery)}”.</div>`;
+    return;
+  }
+
+  list.innerHTML = shown.map(e => `
     <div class="history-item${e.id === activeHistoryId ? ' active' : ''}" data-id="${e.id}" role="button" tabindex="0">
-      <span class="history-risk-dot" style="background: ${SEVERITY_COLORS[e.risk] || '#64748b'}; color: ${SEVERITY_COLORS[e.risk] || '#64748b'}"></span>
-      <span class="history-main">
-        <span class="history-title">${escapeHtml(e.title)}</span>
-        <span class="history-meta">${formatWhen(e.savedAt)} · ${e.nodeCount} issue${e.nodeCount === 1 ? '' : 's'} · ${e.rpMode ? 'RP' : 'Real'}${e.hasDeepDives ? ' · deep' : ''}</span>
-      </span>
+      ${historyRowInner(e)}
       <button type="button" class="history-delete" data-delete="${e.id}" title="Remove from history" aria-label="Remove from history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>

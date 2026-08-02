@@ -35,7 +35,13 @@
           <span class="reg-title" id="reg-title"></span>
           <svg class="reg-switcher-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <div class="reg-switcher-menu" id="reg-switcher-menu" role="listbox" aria-label="Recent scans" hidden></div>
+        <div class="reg-switcher-menu" id="reg-switcher-menu" hidden>
+          <div class="scan-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="search" id="reg-switcher-search" placeholder="Search scans…" autocomplete="off" spellcheck="false" aria-label="Search scans" aria-controls="reg-switcher-list">
+          </div>
+          <div class="reg-switcher-list" id="reg-switcher-list" role="listbox" aria-label="Recent scans"></div>
+        </div>
       </div>
     </div>
     <div class="header-right">
@@ -99,6 +105,10 @@
             </div>
           </div>
           <div class="rail-section-body" id="history-body">
+            <div class="scan-search" id="history-search-wrap" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="search" id="history-search" placeholder="Search scans…" autocomplete="off" spellcheck="false" aria-label="Search recent scans">
+            </div>
             <div class="history-list" id="history-list"></div>
           </div>
         </section>

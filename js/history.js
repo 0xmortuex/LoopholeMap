@@ -66,12 +66,36 @@ function summarize(entry) {
     rpMode: entry.rpMode !== false,
     risk: entry.data.overallRisk,
     nodeCount: entry.data.nodes.length,
-    hasDeepDives: Object.keys(entry.deepDives || {}).length > 0
+    hasDeepDives: Object.keys(entry.deepDives || {}).length > 0,
+    // Searchable so a scan can be found by an issue it contains, not just
+    // by the bill's title.
+    issueTitles: entry.data.nodes.map(n => n.title)
   };
 }
 
 function listHistory() {
   return readAll().map(summarize);
+}
+
+/**
+ * Case-insensitive search over the bill title and its issue titles.
+ * Returns matching summaries, each tagged with `matchedIssue` when the hit
+ * came from an issue rather than the title.
+ */
+function searchHistory(entries, query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return entries.map(e => ({ ...e, matchedIssue: null }));
+
+  const results = [];
+  entries.forEach(entry => {
+    if (entry.title.toLowerCase().includes(q)) {
+      results.push({ ...entry, matchedIssue: null });
+      return;
+    }
+    const issue = (entry.issueTitles || []).find(t => t.toLowerCase().includes(q));
+    if (issue) results.push({ ...entry, matchedIssue: issue });
+  });
+  return results;
 }
 
 /**
@@ -136,5 +160,6 @@ function formatWhen(timestamp) {
 }
 
 export {
-  listHistory, saveToHistory, loadHistoryEntry, deleteHistoryEntry, clearHistory, formatWhen
+  listHistory, searchHistory, saveToHistory, loadHistoryEntry, deleteHistoryEntry,
+  clearHistory, formatWhen
 };
