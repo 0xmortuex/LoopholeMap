@@ -57,6 +57,11 @@ function init() {
   window._showToast = showToast;
 
   renderHistory();
+  // Landing with stored scans but nothing on the board: open the list so
+  // picking up where you left off is one click, not two.
+  if (!analysisData && listHistory().length) {
+    $('history-section').classList.remove('collapsed');
+  }
   restoreSharedAnalysis();
   // Pasting a share link into the address bar while already on the site only
   // changes the fragment — no reload, so DOMContentLoaded never fires again.
@@ -395,6 +400,7 @@ function showGraphView(data) {
   destroyBoard();
 
   $('reg-title').textContent = data.title;
+  updateRegSwitcher();
 
   const riskBadge = $('risk-badge');
   riskBadge.textContent = data.overallRisk;
@@ -644,6 +650,83 @@ function wireHistory() {
     renderHistory();
     showToast('History cleared', 'info');
   });
+
+  wireRegSwitcher();
+}
+
+/* ===== Header regulation switcher ===== */
+
+function isSwitcherOpen() {
+  return !$('reg-switcher-menu').hidden;
+}
+
+function closeRegSwitcher() {
+  $('reg-switcher-menu').hidden = true;
+  $('reg-switcher').classList.remove('open');
+  $('reg-switcher-btn').setAttribute('aria-expanded', 'false');
+}
+
+function openRegSwitcher() {
+  renderRegSwitcherMenu();
+  $('reg-switcher-menu').hidden = false;
+  $('reg-switcher').classList.add('open');
+  $('reg-switcher-btn').setAttribute('aria-expanded', 'true');
+}
+
+function wireRegSwitcher() {
+  $('reg-switcher-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    isSwitcherOpen() ? closeRegSwitcher() : openRegSwitcher();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (isSwitcherOpen() && !e.target.closest('#reg-switcher')) closeRegSwitcher();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isSwitcherOpen()) closeRegSwitcher();
+  });
+}
+
+// Shows the switcher once a board is up, and marks it "solo" when there is
+// nothing else stored to switch to.
+function updateRegSwitcher() {
+  const wrap = $('reg-switcher');
+  const entries = listHistory();
+  wrap.hidden = !analysisData;
+  wrap.classList.toggle('solo', entries.length < 2);
+  if (isSwitcherOpen()) renderRegSwitcherMenu();
+}
+
+function renderRegSwitcherMenu() {
+  const menu = $('reg-switcher-menu');
+  const entries = listHistory();
+
+  if (!entries.length) {
+    menu.innerHTML = '<div class="history-empty">No other scans yet.</div>';
+    return;
+  }
+
+  menu.innerHTML = `
+    <div class="reg-switcher-menu-label">Switch regulation · ${entries.length} recent</div>
+    ${entries.map(e => `
+      <button type="button" class="reg-switcher-item${e.id === activeHistoryId ? ' current' : ''}" data-id="${e.id}" role="option" aria-selected="${e.id === activeHistoryId}">
+        <span class="history-risk-dot" style="background: ${SEVERITY_COLORS[e.risk] || '#64748b'}; color: ${SEVERITY_COLORS[e.risk] || '#64748b'}"></span>
+        <span class="history-main">
+          <span class="history-title">${escapeHtml(e.title)}</span>
+          <span class="history-meta">${formatWhen(e.savedAt)} · ${e.nodeCount} issue${e.nodeCount === 1 ? '' : 's'} · ${e.rpMode ? 'RP' : 'Real'}${e.hasDeepDives ? ' · deep' : ''}</span>
+        </span>
+        <svg class="reg-switcher-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    `).join('')}
+  `;
+
+  menu.querySelectorAll('.reg-switcher-item').forEach(item => {
+    item.addEventListener('click', () => {
+      closeRegSwitcher();
+      if (item.dataset.id !== activeHistoryId) openHistoryEntry(item.dataset.id);
+    });
+  });
 }
 
 function renderHistory() {
@@ -651,6 +734,7 @@ function renderHistory() {
   const list = $('history-list');
   const entries = listHistory();
 
+  updateRegSwitcher();
   section.hidden = entries.length === 0;
   if (!entries.length) { list.innerHTML = ''; return; }
 

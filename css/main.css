@@ -154,15 +154,93 @@ textarea:focus-visible,
 }
 .brand-text .accent { color: var(--accent); }
 
+/* ===== Regulation switcher (header) ===== */
+
+.reg-switcher { position: relative; min-width: 0; }
+.reg-switcher[hidden] { display: none; }
+
+.reg-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 42vw;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 5px 8px 5px 14px;
+  border-left: 1px solid var(--border-soft);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.reg-switcher-btn:hover { background: var(--bg-2); }
+.reg-switcher-btn:hover .reg-title { color: var(--text); }
+.reg-switcher-chevron {
+  width: 13px; height: 13px;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.reg-switcher.open .reg-switcher-chevron { transform: rotate(180deg); }
+/* With no other scan stored there is nothing to switch to. */
+.reg-switcher.solo .reg-switcher-btn { pointer-events: none; }
+.reg-switcher.solo .reg-switcher-chevron { display: none; }
+
 .reg-title {
   font-size: 13px;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-left: 1px solid var(--border-soft);
-  padding-left: 14px;
 }
+
+.reg-switcher-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 8px;
+  width: min(360px, 78vw);
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+  background: rgba(18, 20, 29, 0.97);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  z-index: 60;
+  transform-origin: top left;
+  animation: popIn var(--dur-base) var(--ease-out);
+}
+.reg-switcher-menu[hidden] { display: none; }
+.reg-switcher-menu-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 6px 8px 8px;
+}
+.reg-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.reg-switcher-item:hover { background: var(--bg-3); border-color: var(--border-soft); }
+.reg-switcher-item.current { background: var(--bg-3); border-color: var(--accent-2); }
+.reg-switcher-item .history-main { flex: 1; min-width: 0; }
+.reg-switcher-check {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  color: var(--accent-2);
+  opacity: 0;
+}
+.reg-switcher-item.current .reg-switcher-check { opacity: 1; }
 
 .risk-badge {
   font-family: var(--font-mono);
@@ -1111,7 +1189,20 @@ textarea:focus-visible,
   .left-rail.open { margin-left: 0; }
   .left-rail.collapsed { margin-left: calc(var(--rail-w) * -1); }
 
+  /* Header is tight on phones: keep the switcher but drop the title text,
+     leaving a compact chevron button that still opens the scan list. */
   .reg-title { display: none; }
+  .reg-switcher-btn { padding-left: 10px; max-width: none; }
+  .reg-switcher.solo { display: none; }
+  /* Anchor to the viewport instead of the button so the menu can't run off
+     the right edge on a narrow screen. */
+  .reg-switcher-menu {
+    position: fixed;
+    top: calc(var(--header-h) + 8px);
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
   .empty-hint { display: none; }
 }
 

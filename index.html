@@ -30,7 +30,13 @@
         </svg>
         <span class="brand-text">Loophole<span class="accent">Map</span></span>
       </div>
-      <div class="reg-title" id="reg-title"></div>
+      <div class="reg-switcher" id="reg-switcher" hidden>
+        <button type="button" class="reg-switcher-btn" id="reg-switcher-btn" aria-haspopup="listbox" aria-expanded="false" title="Switch regulation">
+          <span class="reg-title" id="reg-title"></span>
+          <svg class="reg-switcher-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="reg-switcher-menu" id="reg-switcher-menu" role="listbox" aria-label="Recent scans" hidden></div>
+      </div>
     </div>
     <div class="header-right">
       <span class="risk-badge" id="risk-badge" hidden></span>
